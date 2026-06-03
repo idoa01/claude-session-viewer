@@ -7,6 +7,7 @@ interface Props {
   session: Session | null
   filter: FilterType
   onFilterChange: (f: FilterType) => void
+  onNavigateTool: (name: string, direction: 'prev' | 'next') => void
 }
 
 const TOOL_ICONS: Record<string, string> = {
@@ -38,7 +39,7 @@ const FILTERS: FilterOption[] = [
   { value: 'no-tools', label: 'Hide tools' },
 ]
 
-export function Sidebar({ session, filter, onFilterChange }: Props) {
+export function Sidebar({ session, filter, onFilterChange, onNavigateTool }: Props) {
   const totalTools = session
     ? Object.values(session.toolCounts).reduce((a, b) => a + b, 0)
     : 0
@@ -132,6 +133,18 @@ export function Sidebar({ session, filter, onFilterChange }: Props) {
               <div key={name} className={styles.toolItem}>
                 <span className={styles.toolIcon}>{getToolIcon(name)}</span>
                 <span className={styles.toolName}>{name}</span>
+                <span className={styles.toolNav}>
+                  <button
+                    className={styles.toolNavBtn}
+                    onClick={() => onNavigateTool(name, 'prev')}
+                    title={`Previous ${name}`}
+                  >↑</button>
+                  <button
+                    className={styles.toolNavBtn}
+                    onClick={() => onNavigateTool(name, 'next')}
+                    title={`Next ${name}`}
+                  >↓</button>
+                </span>
                 <span className={styles.toolCount}>{count}</span>
               </div>
             ))}

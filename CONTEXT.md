@@ -16,6 +16,12 @@ A typed unit of content within a Message. Variants:
 - **ToolCallBlock** — a tool invocation made by the assistant. Has a tool name and a JSON input payload.
 - **ToolResultBlock** — the output returned to the assistant after a tool call. Paired to a ToolCallBlock by `tool_use_id`.
 
+### Tool Index
+A derived data structure mapping each tool name to the ordered list of Message UUIDs that contain at least one call to that tool. Built from the Session at load time. Used by the Sidebar to navigate between occurrences of a tool.
+
+### Tool Navigation
+The ability to jump the viewport to the previous or next Message containing a given tool type. Direction is relative to the viewport midpoint — "next" finds the first Message whose top edge is below the midpoint; "prev" finds the last Message whose top edge is above it. Clamps at the boundary (no wrap-around).
+
 ### Empty State
 The state of the app when no Session has been loaded. The app shell (header, sidebar, main area) is visible but unpopulated. The main area shows a centered prompt to load a file.
 

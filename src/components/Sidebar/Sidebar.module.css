@@ -95,6 +95,35 @@
 
 .toolIcon { font-size: 15px; }
 .toolName { flex: 1; }
+
+.toolNav {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.toolItem:hover .toolNav {
+  opacity: 1;
+}
+
+.toolNavBtn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 11px;
+  line-height: 1;
+  padding: 2px 5px;
+  transition: background 0.1s, color 0.1s;
+}
+
+.toolNavBtn:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
 .toolCount {
   font-family: var(--mono);
   font-size: 12px;

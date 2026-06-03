@@ -22,7 +22,7 @@ export function MessageItem({ message }: Props) {
   const u = message.usage
 
   return (
-    <div className={isUser ? styles.msgUser : styles.msgAssistant}>
+    <div id={message.uuid} className={isUser ? styles.msgUser : styles.msgAssistant}>
       <div className={styles.header}>
         <span className={`${styles.roleLabel} ${isUser ? styles.roleLabelUser : styles.roleLabelAssistant}`}>
           {isUser ? 'User' : 'Claude'}
