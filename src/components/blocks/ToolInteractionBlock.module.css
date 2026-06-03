@@ -114,6 +114,35 @@
   font-style: italic;
 }
 
+/* ── EditDiff ── */
+
+.editDiff {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.diffHeader {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+}
+
+.diffHeaderPath {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
+.diffBody {
+  display: flex;
+  flex-direction: column;
+}
+
 /* ── AskUserQuestion ── */
 
 .auqBlock {

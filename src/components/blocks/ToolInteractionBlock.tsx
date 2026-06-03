@@ -1,4 +1,7 @@
 import { useState } from 'react'
+import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { langFromPath } from '../../config/languages'
 import type { ToolInteractionBlock as ToolInteractionBlockType } from '../../types/session'
 import styles from './ToolInteractionBlock.module.css'
 
@@ -100,6 +103,72 @@ function AskUserQuestionBody({ input }: { input: Record<string, unknown> }) {
   )
 }
 
+// ── EditDiff ───────────────────────────────────────────────────────────────
+
+const diffTheme: Record<string, React.CSSProperties> = {
+  ...oneDark,
+  'pre[class*="language-"]': {
+    ...(oneDark['pre[class*="language-"]'] as React.CSSProperties),
+    background: 'transparent',
+    margin: 0,
+    padding: 0,
+    fontSize: '12px',
+    lineHeight: '1.6',
+  },
+  'code[class*="language-"]': {
+    ...(oneDark['code[class*="language-"]'] as React.CSSProperties),
+    background: 'transparent',
+    fontSize: '12px',
+    lineHeight: '1.6',
+  },
+}
+
+function EditDiff({ input }: { input: Record<string, unknown> }) {
+  const filePath = String(input.file_path ?? '')
+  const oldString = String(input.old_string ?? '')
+  const newString = String(input.new_string ?? '')
+  const lang = langFromPath(filePath)
+
+  const oldLines = oldString.split('\n')
+  const newLines = newString.split('\n')
+
+  function DiffLines({ lines, prefix, bg }: { lines: string[]; prefix: string; bg: string }) {
+    const code = lines.map(l => `${prefix} ${l}`).join('\n')
+    return (
+      <div style={{ background: bg }}>
+        <SyntaxHighlighter
+          language={lang}
+          style={diffTheme as never}
+          customStyle={{ margin: 0, padding: '0 12px', background: 'transparent', overflowX: 'auto' }}
+          PreTag="div"
+          wrapLines
+          lineProps={(_lineNumber: number) => ({
+            style: { display: 'block', whiteSpace: 'pre' },
+          })}
+        >
+          {code}
+        </SyntaxHighlighter>
+      </div>
+    )
+  }
+
+  return (
+    <div className={styles.editDiff}>
+      <div className={styles.diffHeader}>
+        <span className={styles.diffHeaderPath}>{filePath}</span>
+      </div>
+      <div className={styles.diffBody}>
+        {oldLines.length > 0 && oldString !== '' && (
+          <DiffLines lines={oldLines} prefix="-" bg="rgba(239,68,68,0.08)" />
+        )}
+        {newLines.length > 0 && newString !== '' && (
+          <DiffLines lines={newLines} prefix="+" bg="rgba(74,222,128,0.08)" />
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ── Main component ─────────────────────────────────────────────────────────
 
 interface Props {
@@ -108,7 +177,8 @@ interface Props {
 
 export function ToolInteractionBlock({ block }: Props) {
   const isAuq = block.name === 'AskUserQuestion' && Array.isArray(block.input.questions)
-  const [open, setOpen] = useState(isAuq)
+  const isEdit = block.name === 'Edit'
+  const [open, setOpen] = useState(isAuq || isEdit)
   const icon = TOOL_ICONS[block.name] ?? '🔧'
   const summary = renderInput(block.name, block.input)
 
@@ -124,7 +194,9 @@ export function ToolInteractionBlock({ block }: Props) {
         <div className={styles.body}>
           {isAuq
             ? <AskUserQuestionBody input={block.input} />
-            : <pre>{JSON.stringify(block.input, null, 2)}</pre>
+            : isEdit
+              ? <EditDiff input={block.input} />
+              : <pre>{JSON.stringify(block.input, null, 2)}</pre>
           }
           {block.result && (
             <div className={styles.result}>

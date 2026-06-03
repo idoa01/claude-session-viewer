@@ -2,13 +2,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import python from 'react-syntax-highlighter/dist/esm/languages/prism/python'
-import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript'
-import javascript from 'react-syntax-highlighter/dist/esm/languages/prism/javascript'
-import bash from 'react-syntax-highlighter/dist/esm/languages/prism/bash'
-import json from 'react-syntax-highlighter/dist/esm/languages/prism/json'
-import yaml from 'react-syntax-highlighter/dist/esm/languages/prism/yaml'
-import markdown from 'react-syntax-highlighter/dist/esm/languages/prism/markdown'
+import '../../config/languages'
 import type { TextBlock as TextBlockType } from '../../types/session'
 
 // oneDark with token colors boosted to full saturation/lightness
@@ -43,17 +37,6 @@ const vividTheme: Record<string, React.CSSProperties> = {
   url:          { color: 'hsl(187, 65%, 68%)' },
 }
 import styles from './TextBlock.module.css'
-
-SyntaxHighlighter.registerLanguage('python', python)
-SyntaxHighlighter.registerLanguage('typescript', typescript)
-SyntaxHighlighter.registerLanguage('javascript', javascript)
-SyntaxHighlighter.registerLanguage('bash', bash)
-SyntaxHighlighter.registerLanguage('sh', bash)
-SyntaxHighlighter.registerLanguage('json', json)
-SyntaxHighlighter.registerLanguage('yaml', yaml)
-SyntaxHighlighter.registerLanguage('yml', yaml)
-SyntaxHighlighter.registerLanguage('markdown', markdown)
-SyntaxHighlighter.registerLanguage('md', markdown)
 
 const highlighterStyle: React.CSSProperties = {
   margin: 0,
