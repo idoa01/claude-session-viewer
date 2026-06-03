@@ -1,0 +1,25 @@
+.layout {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  grid-template-rows: auto 1fr;
+  grid-template-areas: "header header" "sidebar main";
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+@media (max-width: 800px) {
+  .layout {
+    grid-template-columns: 1fr;
+    grid-template-areas: "header" "sidebar" "main";
+  }
+}
+
+.main {
+  grid-area: main;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow-y: auto;
+}

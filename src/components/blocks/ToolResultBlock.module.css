@@ -1,0 +1,61 @@
+.block {
+  background: var(--result-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+}
+
+.header:hover {
+  background: var(--surface2);
+}
+
+.label {
+  font-size: 11.5px;
+  color: var(--text-faint);
+  font-family: var(--mono);
+  flex: 1;
+}
+
+.truncatedTag {
+  font-size: 10px;
+  background: rgba(251, 146, 60, 0.2);
+  color: var(--orange);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.chevron {
+  font-size: 10px;
+  color: var(--text-faint);
+  transition: transform 0.2s;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.body {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+}
+
+.body pre {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 0;
+}

@@ -1,0 +1,85 @@
+.text {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  word-break: break-word;
+}
+
+.text p {
+  margin: 0 0 0.6em 0;
+}
+
+.text p:last-child {
+  margin-bottom: 0;
+}
+
+.codeWrapper {
+  position: relative;
+  margin: 8px 0;
+  background: var(--tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Override the oneDark theme background injected on inner elements */
+.codeWrapper > div,
+.codeWrapper > div > code,
+.codeWrapper > div > pre {
+  background: transparent !important;
+}
+
+.inlineCode {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 1px 6px;
+  color: var(--orange);
+}
+
+.langLabel {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 10px;
+  color: var(--text-faint);
+  font-family: var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 12px 0;
+  font-size: 13px;
+  display: block;
+  overflow-x: auto;
+}
+
+.th {
+  background: var(--surface2);
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+  text-align: left;
+}
+
+.td {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 12px;
+}
+
+.table tbody tr:nth-child(even) .td {
+  background: var(--surface2);
+}

@@ -1,0 +1,99 @@
+.msgUser {
+  background: var(--user-bg);
+  border: 1px solid var(--user-border);
+  border-radius: var(--radius);
+  margin-left: 40px;
+}
+
+.msgAssistant {
+  background: var(--asst-bg);
+  border: 1px solid var(--asst-border);
+  border-radius: var(--radius);
+  margin-right: 40px;
+}
+
+@media (max-width: 600px) {
+  .msgUser, .msgAssistant { margin: 0; }
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: var(--radius) var(--radius) 0 0;
+  position: relative;
+  overflow: visible;
+}
+
+.roleLabel {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+
+.roleLabelUser {
+  color: var(--accent2);
+}
+
+.roleLabelAssistant {
+  color: var(--purple);
+}
+
+.usageWrap {
+  position: relative;
+  margin-left: auto;
+  cursor: default;
+}
+
+.usageWrap:hover .usageTooltip {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+
+.usage {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: var(--mono);
+}
+
+.usageTooltip {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  white-space: nowrap;
+  z-index: 10;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-4px);
+  transition: opacity 0.15s, transform 0.15s;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+
+.timestamp {
+  font-size: 11px;
+  color: var(--text-faint);
+  font-family: var(--mono);
+  cursor: default;
+}
+
+.body {
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}

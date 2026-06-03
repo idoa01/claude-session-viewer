@@ -1,0 +1,166 @@
+.block {
+  background: var(--tool-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.1s;
+}
+
+.header:hover {
+  background: var(--surface2);
+}
+
+.icon { font-size: 14px; }
+
+.name {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--orange);
+  font-weight: 600;
+  flex: 1;
+}
+
+.chevron {
+  font-size: 10px;
+  color: var(--text-faint);
+  transition: transform 0.2s;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.body {
+  border-top: 1px solid var(--border);
+  padding: 12px;
+}
+
+.body pre {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin: 0;
+}
+
+/* ── AskUserQuestion ── */
+
+.auqBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Tabs — only shown when questions.length > 1 */
+.tabs {
+  display: flex;
+  gap: 2px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.tab {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  margin-bottom: -1px;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tabActive {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.questionBody {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.questionHeader {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-faint);
+}
+
+.questionText {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.multiSelectBadge {
+  align-self: flex-start;
+  font-size: 10px;
+  background: rgba(124, 106, 247, 0.15);
+  color: var(--accent);
+  border: 1px solid rgba(124, 106, 247, 0.3);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+
+.optionList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.option {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.optionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent2);
+}
+
+.optionDesc {
+  font-size: 12px;
+  color: var(--text-dim);
+  line-height: 1.55;
+}
+
+.optionPreview {
+  margin-top: 6px;
+  background: var(--result-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  white-space: pre;
+  overflow-x: auto;
+  line-height: 1.5;
+}

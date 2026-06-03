@@ -1,0 +1,41 @@
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #22263a;
+  --surface3: #2a2f47;
+  --border: #2e3450;
+  --accent: #7c6af7;
+  --accent2: #5ab5ff;
+  --user-bg: #1a2744;
+  --user-border: #3b6adc;
+  --asst-bg: #1a1d27;
+  --asst-border: #2e3450;
+  --tool-bg: #12161f;
+  --result-bg: #0d1018;
+  --text: #e2e6f0;
+  --text-dim: #8891aa;
+  --text-faint: #4a5275;
+  --green: #4ade80;
+  --orange: #fb923c;
+  --purple: #a78bfa;
+  --cyan: #22d3ee;
+  --font: -apple-system, 'Segoe UI', sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  --radius: 10px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  line-height: 1.65;
+  min-height: 100vh;
+}
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
