@@ -114,6 +114,26 @@
   font-style: italic;
 }
 
+/* ── BashBlock ── */
+
+.bashBlock {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--result-bg);
+}
+
+.bashDescription {
+  padding: 6px 12px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+
 /* ── EditDiff ── */
 
 .editDiff {

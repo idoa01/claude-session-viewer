@@ -103,6 +103,49 @@ function AskUserQuestionBody({ input }: { input: Record<string, unknown> }) {
   )
 }
 
+// ── WriteBlock ─────────────────────────────────────────────────────────────
+
+function WriteBlock({ input }: { input: Record<string, unknown> }) {
+  const filePath = String(input.file_path ?? '')
+  const content = String(input.content ?? '')
+  const lang = langFromPath(filePath)
+
+  return (
+    <div className={styles.bashBlock}>
+      <div className={styles.bashDescription}>{filePath}</div>
+      <SyntaxHighlighter
+        language={lang}
+        style={diffTheme as never}
+        customStyle={{ margin: 0, padding: '10px 12px', background: 'transparent', overflowX: 'auto' }}
+        PreTag="div"
+      >
+        {content}
+      </SyntaxHighlighter>
+    </div>
+  )
+}
+
+// ── BashBlock ──────────────────────────────────────────────────────────────
+
+function BashBlock({ input }: { input: Record<string, unknown> }) {
+  const command = String(input.command ?? '')
+  const description = input.description ? String(input.description) : null
+
+  return (
+    <div className={styles.bashBlock}>
+      {description && <div className={styles.bashDescription}>{description}</div>}
+      <SyntaxHighlighter
+        language="bash"
+        style={diffTheme as never}
+        customStyle={{ margin: 0, padding: '10px 12px', background: 'transparent', overflowX: 'auto' }}
+        PreTag="div"
+      >
+        {command}
+      </SyntaxHighlighter>
+    </div>
+  )
+}
+
 // ── EditDiff ───────────────────────────────────────────────────────────────
 
 const diffTheme: Record<string, React.CSSProperties> = {
@@ -178,6 +221,9 @@ interface Props {
 export function ToolInteractionBlock({ block }: Props) {
   const isAuq = block.name === 'AskUserQuestion' && Array.isArray(block.input.questions)
   const isEdit = block.name === 'Edit'
+  const isBash = block.name === 'Bash'
+  const isWrite = block.name === 'Write'
+  const isInputless = block.name === 'Read' || block.name === 'Skill'
   const [open, setOpen] = useState(isAuq || isEdit)
   const icon = TOOL_ICONS[block.name] ?? '🔧'
   const summary = renderInput(block.name, block.input)
@@ -196,7 +242,13 @@ export function ToolInteractionBlock({ block }: Props) {
             ? <AskUserQuestionBody input={block.input} />
             : isEdit
               ? <EditDiff input={block.input} />
-              : <pre>{JSON.stringify(block.input, null, 2)}</pre>
+              : isBash
+                ? <BashBlock input={block.input} />
+                : isWrite
+                  ? <WriteBlock input={block.input} />
+                  : isInputless
+                    ? null
+                    : <pre>{JSON.stringify(block.input, null, 2)}</pre>
           }
           {block.result && (
             <div className={styles.result}>
