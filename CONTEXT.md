@@ -26,6 +26,13 @@ The ability to jump the viewport to the previous or next Message containing a gi
 The state of the app when no Session has been loaded. The app shell (header, sidebar, main area) is visible but unpopulated. The main area shows a centered prompt to load a file.
 
 ### File Input
-The mechanism by which a user supplies a Session to the app. Two modes:
+The mechanism by which a user supplies a Session to the app. Three modes:
 - **CLI mode** — a `--file=<path>` argument passed at `npm start` time. The file is injected into the app at build/serve time via a Vite plugin shim.
 - **Drop mode** — a drag-and-drop target or file-picker in the Empty State UI. Uses the browser's native `FileReader` API.
+- **Browser mode** — a directory picker in the Sidebar that grants access to `~/.claude/projects/` via the File System Access API. Enumerates all project directories and their `.jsonl` files in-browser with no server involved.
+
+### Session Browser
+A persistent sidebar panel listing all Sessions available in the granted directory. Sessions are shown in a flat, recency-sorted list. A filter input above the list narrows visible rows by matching the query against the `aiTitle` and `projectLabel` fields (case-insensitive). Each row displays the `aiTitle` (falling back to the session UUID if absent) as the primary label, and the last two path segments of the project directory as secondary context (e.g. `code/claude-session-viewer`). Selecting a row replaces the active Session; the previous Session's parsed content is released from memory immediately.
+
+### Project Directory
+The `~/.claude/projects/` directory on the user's machine. Contains one subdirectory per project, named as the project's absolute filesystem path with `/` replaced by `-`. Each subdirectory contains one or more Session files named `<uuid>.jsonl`.

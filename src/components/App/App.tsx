@@ -108,7 +108,7 @@ export default function App() {
   return (
     <div className={styles.layout}>
       <PageHeader session={session} sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-      <Sidebar session={session} filter={filter} onFilterChange={setFilter} onNavigateTool={onNavigateTool} />
+      <Sidebar session={session} filter={filter} onFilterChange={setFilter} onNavigateTool={onNavigateTool} onLoadSession={loadFile} />
       <main className={styles.main}>
         {state.status === 'loaded' ? (
           <MessageFeed messages={sortedMessages} />

@@ -1,6 +1,7 @@
 import type { Session } from '../../types/session'
 import type { FilterType } from '../../types/filter'
 import { formatCost, formatTokens } from '../../utils/pricing'
+import { SessionBrowser } from '../SessionBrowser/SessionBrowser'
 import styles from './Sidebar.module.css'
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
   filter: FilterType
   onFilterChange: (f: FilterType) => void
   onNavigateTool: (name: string, direction: 'prev' | 'next') => void
+  onLoadSession: (file: File) => void
 }
 
 const TOOL_ICONS: Record<string, string> = {
@@ -39,7 +41,7 @@ const FILTERS: FilterOption[] = [
   { value: 'no-tools', label: 'Hide tools' },
 ]
 
-export function Sidebar({ session, filter, onFilterChange, onNavigateTool }: Props) {
+export function Sidebar({ session, filter, onFilterChange, onNavigateTool, onLoadSession }: Props) {
   const totalTools = session
     ? Object.values(session.toolCounts).reduce((a, b) => a + b, 0)
     : 0
@@ -50,6 +52,12 @@ export function Sidebar({ session, filter, onFilterChange, onNavigateTool }: Pro
 
   return (
     <aside className={styles.sidebar}>
+      {/* Session Browser */}
+      <div className={styles.section}>
+        <div className={styles.sectionLabel}>Sessions</div>
+        <SessionBrowser onSelect={onLoadSession} />
+      </div>
+
       {/* Stats */}
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Stats</div>
