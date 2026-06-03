@@ -93,6 +93,13 @@
   color: var(--orange);
   border-radius: 4px;
   padding: 1px 6px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--mono);
+}
+
+.truncatedTag:hover {
+  background: rgba(251, 146, 60, 0.35);
 }
 
 .result pre {
@@ -101,10 +108,13 @@
   color: var(--text-dim);
   white-space: pre-wrap;
   word-break: break-word;
-  max-height: 300px;
   overflow-y: auto;
   margin: 0;
   padding: 10px;
+}
+
+.result pre.resultTruncated {
+  max-height: 300px;
 }
 
 .noResult {

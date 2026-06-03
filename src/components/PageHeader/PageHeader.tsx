@@ -1,8 +1,14 @@
 import type { Session } from '../../types/session'
 import styles from './PageHeader.module.css'
 
+type SortField = 'time' | 'price'
+type SortDirection = 'asc' | 'desc'
+
 interface Props {
   session: Session | null
+  sortField: SortField
+  sortDirection: SortDirection
+  onSort: (field: SortField) => void
 }
 
 function formatDuration(firstTimestamp: string, lastTimestamp: string): string {
@@ -30,7 +36,8 @@ function formatDatetime(timestamp: string): string {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss} UTC`
 }
 
-export function PageHeader({ session }: Props) {
+export function PageHeader({ session, sortField, sortDirection, onSort }: Props) {
+  const arrow = sortDirection === 'asc' ? '↓' : '↑'
   const title = session?.aiTitle ?? (session ? `Claude Code Session — ${session.project}` : 'Session Viewer')
 
   return (
@@ -54,6 +61,22 @@ export function PageHeader({ session }: Props) {
           <div className={styles.chip}>
             🗂 {session.project}
           </div>
+        </div>
+      )}
+      {session && (
+        <div className={styles.sortControls}>
+          <button
+            className={`${styles.sortBtn} ${sortField === 'time' ? styles.sortBtnActive : ''}`}
+            onClick={() => onSort('time')}
+          >
+            Time {sortField === 'time' ? arrow : ''}
+          </button>
+          <button
+            className={`${styles.sortBtn} ${sortField === 'price' ? styles.sortBtnActive : ''}`}
+            onClick={() => onSort('price')}
+          >
+            Price {sortField === 'price' ? arrow : ''}
+          </button>
         </div>
       )}
     </header>

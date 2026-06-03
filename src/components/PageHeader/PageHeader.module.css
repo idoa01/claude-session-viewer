@@ -32,3 +32,31 @@
   display: flex; align-items: center; gap: 6px;
 }
 .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+
+.sortControls {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.sortBtn {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.sortBtn:hover {
+  border-color: var(--accent);
+  color: var(--text);
+}
+
+.sortBtnActive {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--surface2);
+}

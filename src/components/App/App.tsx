@@ -8,9 +8,23 @@ import { MessageFeed } from '../MessageFeed/MessageFeed'
 import { EmptyState } from '../EmptyState/EmptyState'
 import styles from './App.module.css'
 
+type SortField = 'time' | 'price'
+type SortDirection = 'asc' | 'desc'
+
 export default function App() {
   const { state, loadFile } = useSessionLoader()
   const [filter, setFilter] = useState<FilterType>('all')
+  const [sortField, setSortField] = useState<SortField>('time')
+  const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+
+  function handleSort(field: SortField) {
+    if (field === sortField) {
+      setSortDirection(d => d === 'asc' ? 'desc' : 'asc')
+    } else {
+      setSortField(field)
+      setSortDirection(field === 'price' ? 'desc' : 'asc')
+    }
+  }
 
   // Global drag-and-drop
   useEffect(() => {
@@ -81,13 +95,23 @@ export default function App() {
       })
     : []
 
+  const sortedMessages = [...filteredMessages].sort((a, b) => {
+    let delta: number
+    if (sortField === 'price') {
+      delta = (a.usage?.estimatedCost ?? 0) - (b.usage?.estimatedCost ?? 0)
+    } else {
+      delta = new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    }
+    return sortDirection === 'asc' ? delta : -delta
+  })
+
   return (
     <div className={styles.layout}>
-      <PageHeader session={session} />
+      <PageHeader session={session} sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
       <Sidebar session={session} filter={filter} onFilterChange={setFilter} onNavigateTool={onNavigateTool} />
       <main className={styles.main}>
         {state.status === 'loaded' ? (
-          <MessageFeed messages={filteredMessages} />
+          <MessageFeed messages={sortedMessages} />
         ) : (
           <EmptyState onFile={loadFile} />
         )}

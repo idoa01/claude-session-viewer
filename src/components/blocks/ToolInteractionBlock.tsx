@@ -225,6 +225,7 @@ export function ToolInteractionBlock({ block }: Props) {
   const isWrite = block.name === 'Write'
   const isInputless = block.name === 'Read' || block.name === 'Skill'
   const [open, setOpen] = useState(isAuq || isEdit)
+  const [resultExpanded, setResultExpanded] = useState(false)
   const icon = TOOL_ICONS[block.name] ?? '🔧'
   const summary = renderInput(block.name, block.input)
 
@@ -253,10 +254,19 @@ export function ToolInteractionBlock({ block }: Props) {
           {block.result && (
             <div className={styles.result}>
               <div className={styles.resultLabel}>
-                ↩ Result{block.result.truncated ? '' : ''}
-                {block.result.truncated && <span className={styles.truncatedTag}>truncated</span>}
+                ↩ Result
+                {block.result.truncated && (
+                  <button
+                    className={styles.truncatedTag}
+                    onClick={e => { e.stopPropagation(); setResultExpanded(v => !v) }}
+                  >
+                    {resultExpanded ? 'truncate' : 'truncated'}
+                  </button>
+                )}
               </div>
-              <pre>{block.result.content}</pre>
+              <pre className={block.result.truncated && !resultExpanded ? styles.resultTruncated : undefined}>
+                {block.result.content}
+              </pre>
             </div>
           )}
           {!block.result && (

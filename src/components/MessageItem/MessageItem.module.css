@@ -47,6 +47,8 @@
   position: relative;
   margin-left: auto;
   cursor: default;
+  white-space: nowrap;
+  font-size: 11px;
 }
 
 .usageWrap:hover .usageTooltip {

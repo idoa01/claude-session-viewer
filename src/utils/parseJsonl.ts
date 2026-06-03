@@ -94,10 +94,9 @@ export function parseJsonl(raw: string): Session {
     for (const b of rm.content) {
       if (b.type !== 'tool_result') continue
       const text = extractToolResultText(b.content)
-      const truncated = text.length > 600
       resultMap.set(b.tool_use_id as string, {
-        content: truncated ? text.slice(0, 600) : text,
-        truncated,
+        content: text,
+        truncated: text.length > 600,
       })
     }
   }
