@@ -173,6 +173,38 @@
   flex-direction: column;
 }
 
+/* ── AgentBlock ── */
+
+.agentType {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: var(--accent);
+  background: rgba(124, 106, 247, 0.12);
+  border: 1px solid rgba(124, 106, 247, 0.25);
+  border-radius: 4px;
+  padding: 1px 6px;
+}
+
+.agentPrompt {
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.agentResult {
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  overflow-y: auto;
+}
+
+.agentResult.resultTruncated {
+  max-height: 300px;
+}
+
 /* ── AskUserQuestion ── */
 
 .auqBlock {

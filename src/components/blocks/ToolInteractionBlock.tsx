@@ -1,9 +1,12 @@
 import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { langFromPath } from '../../config/languages'
 import type { ToolInteractionBlock as ToolInteractionBlockType } from '../../types/session'
 import styles from './ToolInteractionBlock.module.css'
+import textStyles from './TextBlock.module.css'
 
 const TOOL_ICONS: Record<string, string> = {
   Read: '📄',
@@ -99,6 +102,30 @@ function AskUserQuestionBody({ input }: { input: Record<string, unknown> }) {
           ))}
         </div>
       </div>
+    </div>
+  )
+}
+
+// ── AgentBlock ─────────────────────────────────────────────────────────────
+
+function AgentBlock({ input }: { input: Record<string, unknown> }) {
+  const description = String(input.description ?? '')
+  const prompt = String(input.prompt ?? '')
+  const agentType = input.subagent_type ? String(input.subagent_type) : 'claude'
+
+  return (
+    <div className={styles.bashBlock}>
+      <div className={styles.bashDescription}>
+        <span className={styles.agentType}>{agentType}</span>
+        {description && <span>{description}</span>}
+      </div>
+      {prompt && (
+        <div className={styles.agentPrompt}>
+          <div className={textStyles.text}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>{prompt}</ReactMarkdown>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -223,8 +250,9 @@ export function ToolInteractionBlock({ block }: Props) {
   const isEdit = block.name === 'Edit'
   const isBash = block.name === 'Bash'
   const isWrite = block.name === 'Write'
+  const isAgent = block.name === 'Agent'
   const isInputless = block.name === 'Read' || block.name === 'Skill'
-  const [open, setOpen] = useState(isAuq || isEdit)
+  const [open, setOpen] = useState(isAuq || isEdit || isAgent)
   const [resultExpanded, setResultExpanded] = useState(false)
   const icon = TOOL_ICONS[block.name] ?? '🔧'
   const summary = renderInput(block.name, block.input)
@@ -247,9 +275,11 @@ export function ToolInteractionBlock({ block }: Props) {
                 ? <BashBlock input={block.input} />
                 : isWrite
                   ? <WriteBlock input={block.input} />
-                  : isInputless
-                    ? null
-                    : <pre>{JSON.stringify(block.input, null, 2)}</pre>
+                  : isAgent
+                    ? <AgentBlock input={block.input} />
+                    : isInputless
+                      ? null
+                      : <pre>{JSON.stringify(block.input, null, 2)}</pre>
           }
           {block.result && (
             <div className={styles.result}>
@@ -264,9 +294,20 @@ export function ToolInteractionBlock({ block }: Props) {
                   </button>
                 )}
               </div>
-              <pre className={block.result.truncated && !resultExpanded ? styles.resultTruncated : undefined}>
-                {block.result.content}
-              </pre>
+              {isAgent
+                ? (
+                  <div className={`${styles.agentResult} ${block.result.truncated && !resultExpanded ? styles.resultTruncated : ''}`}>
+                    <div className={textStyles.text}>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{block.result.content}</ReactMarkdown>
+                    </div>
+                  </div>
+                )
+                : (
+                  <pre className={block.result.truncated && !resultExpanded ? styles.resultTruncated : undefined}>
+                    {block.result.content}
+                  </pre>
+                )
+              }
             </div>
           )}
           {!block.result && (

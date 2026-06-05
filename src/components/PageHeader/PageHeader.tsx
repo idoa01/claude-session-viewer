@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Session } from '../../types/session'
 import styles from './PageHeader.module.css'
 
@@ -6,6 +7,7 @@ type SortDirection = 'asc' | 'desc'
 
 interface Props {
   session: Session | null
+  filePath?: string
   sortField: SortField
   sortDirection: SortDirection
   onSort: (field: SortField) => void
@@ -36,15 +38,29 @@ function formatDatetime(timestamp: string): string {
   return `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss} UTC`
 }
 
-export function PageHeader({ session, sortField, sortDirection, onSort }: Props) {
+export function PageHeader({ session, filePath, sortField, sortDirection, onSort }: Props) {
+  const [showPath, setShowPath] = useState(false)
   const arrow = sortDirection === 'asc' ? '↓' : '↑'
-  const title = session?.aiTitle ?? (session ? `Claude Code Session — ${session.project}` : 'Session Viewer')
+  const sessionTitle = session?.aiTitle ?? (session ? `Claude Code Session — ${session.project}` : 'Session Viewer')
+  const fileName = filePath ? filePath.split('/').pop() ?? filePath : undefined
+  const title = showPath && fileName ? fileName : sessionTitle
 
   return (
     <header className={styles.header}>
       <div className={styles.logo}>🤖</div>
       <div className={styles.titleGroup}>
-        <h1>{title}</h1>
+        <div className={styles.titleRow}>
+          <h1 title={showPath && filePath ? filePath : undefined}>{title}</h1>
+          {filePath && (
+            <button
+              className={styles.titleToggle}
+              onClick={() => setShowPath(v => !v)}
+              title={showPath ? 'Show session title' : 'Show file path'}
+            >
+              {showPath ? '✕' : '📁'}
+            </button>
+          )}
+        </div>
         {session && <p>{session.cwd}</p>}
       </div>
       {session && (

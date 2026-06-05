@@ -9,7 +9,7 @@ interface Props {
   filter: FilterType
   onFilterChange: (f: FilterType) => void
   onNavigateTool: (name: string, direction: 'prev' | 'next') => void
-  onLoadSession: (file: File) => void
+  onLoadSession: (file: File, filePath?: string) => void
 }
 
 const TOOL_ICONS: Record<string, string> = {
@@ -55,7 +55,7 @@ export function Sidebar({ session, filter, onFilterChange, onNavigateTool, onLoa
       {/* Session Browser */}
       <div className={styles.section}>
         <div className={styles.sectionLabel}>Sessions</div>
-        <SessionBrowser onSelect={onLoadSession} />
+        <SessionBrowser onSelect={(file, filePath) => onLoadSession(file, filePath)} />
       </div>
 
       {/* Stats */}

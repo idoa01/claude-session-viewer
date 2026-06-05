@@ -59,7 +59,7 @@ export function TextBlock({ block }: Props) {
         remarkPlugins={[remarkGfm]}
         components={{
           code({ className, children, ...props }) {
-            const isBlock = Boolean(className)
+            const isBlock = Boolean(className) || String(children).includes('\n')
             const lang = className?.replace('language-', '') ?? ''
             if (isBlock) {
               return (

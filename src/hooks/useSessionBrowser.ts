@@ -3,6 +3,7 @@ import { useState, useCallback, useEffect } from 'react'
 export interface SessionEntry {
   fileHandle: FileSystemFileHandle
   sessionId: string
+  projectDirName: string
   projectLabel: string
   aiTitle: string | undefined
   lastModified: number
@@ -77,6 +78,7 @@ async function scanDirectory(rootHandle: FileSystemDirectoryHandle): Promise<Ses
       entries.push({
         fileHandle: fileHandle as FileSystemFileHandle,
         sessionId,
+        projectDirName,
         projectLabel,
         aiTitle,
         lastModified: file.lastModified,

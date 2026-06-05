@@ -16,6 +16,7 @@ export default function App() {
   const [filter, setFilter] = useState<FilterType>('all')
   const [sortField, setSortField] = useState<SortField>('time')
   const [sortDirection, setSortDirection] = useState<SortDirection>('asc')
+  const [filePath, setFilePath] = useState<string | undefined>()
 
   function handleSort(field: SortField) {
     if (field === sortField) {
@@ -107,8 +108,8 @@ export default function App() {
 
   return (
     <div className={styles.layout}>
-      <PageHeader session={session} sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
-      <Sidebar session={session} filter={filter} onFilterChange={setFilter} onNavigateTool={onNavigateTool} onLoadSession={loadFile} />
+      <PageHeader session={session} filePath={filePath} sortField={sortField} sortDirection={sortDirection} onSort={handleSort} />
+      <Sidebar session={session} filter={filter} onFilterChange={setFilter} onNavigateTool={onNavigateTool} onLoadSession={(file, fp) => { loadFile(file); setFilePath(fp) }} />
       <main className={styles.main}>
         {state.status === 'loaded' ? (
           <MessageFeed messages={sortedMessages} />

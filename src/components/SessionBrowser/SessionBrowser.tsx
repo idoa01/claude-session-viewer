@@ -5,7 +5,7 @@ import type { SessionEntry } from '../../hooks/useSessionBrowser'
 import styles from './SessionBrowser.module.css'
 
 interface Props {
-  onSelect: (file: File) => void
+  onSelect: (file: File, filePath?: string) => void
 }
 
 function formatDate(ms: number): string {
@@ -25,7 +25,8 @@ export function SessionBrowser({ onSelect }: Props) {
     const file = await entry.fileHandle.getFile()
     setSelected(entry)
     setOpen(false)
-    onSelect(file)
+    const filePath = `~/.claude/projects/${entry.projectDirName}/${entry.sessionId}.jsonl`
+    onSelect(file, filePath)
   }
 
   function handleCopy() {
