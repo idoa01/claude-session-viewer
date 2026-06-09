@@ -113,8 +113,8 @@ export function SessionBrowser({ onSelect }: Props) {
               <div className={styles.list}>
                 {state.entries.filter(entry => {
                   if (!query) return true
-                  const q = query.toLowerCase()
-                  return (entry.aiTitle ?? '').toLowerCase().includes(q) || entry.projectLabel.toLowerCase().includes(q)
+                  const q = query.toLowerCase().replace(/\.jsonl$/, '')
+                  return (entry.aiTitle ?? '').toLowerCase().includes(q) || entry.projectLabel.toLowerCase().includes(q) || entry.sessionId.toLowerCase().includes(q)
                 }).map(entry => (
                   <button
                     key={entry.sessionId}
