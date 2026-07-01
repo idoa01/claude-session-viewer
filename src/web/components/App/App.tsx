@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import type { FilterType } from '../../types/filter'
-import type { Message, ToolInteractionBlock } from '../../types/session'
+import type { FilterType } from '../../../core/types/filter'
+import type { Message, ToolInteractionBlock } from '../../../core/types/session'
 import { useSessionLoader } from '../../hooks/useSessionLoader'
 import { PageHeader } from '../PageHeader/PageHeader'
 import { Sidebar } from '../Sidebar/Sidebar'

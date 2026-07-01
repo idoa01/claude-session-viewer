@@ -1,7 +1,7 @@
-import type { Message } from '../../types/session'
+import type { Message } from '../../../core/types/session'
 import { TextBlock as TextBlockComp } from '../blocks/TextBlock'
 import { ToolInteractionBlock as ToolInteractionBlockComp } from '../blocks/ToolInteractionBlock'
-import { formatCost, formatTokens } from '../../utils/pricing'
+import { formatCost, formatTokens } from '../../../core/utils/pricing'
 import styles from './MessageItem.module.css'
 
 interface Props {

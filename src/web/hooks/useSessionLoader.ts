@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import type { Session } from '../types/session'
-import { parseJsonl } from '../utils/parseJsonl'
+import type { Session } from '../../core/types/session'
+import { parseJsonl } from '../../core/utils/parseJsonl'
 
 type State =
   | { status: 'idle' }

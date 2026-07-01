@@ -81,6 +81,7 @@ out
 # Nuxt.js build / generate output
 .nuxt
 dist
+dist-tui
 .output
 
 # Gatsby files
@@ -148,3 +149,6 @@ vite.config.ts.timestamp-*
 .dolt/
 *.db
 .beads-credential-key
+
+# bv (beads viewer) local config and caches
+.bv/

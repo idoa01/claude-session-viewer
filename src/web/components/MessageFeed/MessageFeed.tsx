@@ -1,4 +1,4 @@
-import type { Message } from '../../types/session'
+import type { Message } from '../../../core/types/session'
 import { MessageItem } from '../MessageItem/MessageItem'
 import styles from './MessageFeed.module.css'
 

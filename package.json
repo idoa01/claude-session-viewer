@@ -3,14 +3,22 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "bin": {
+    "sesh": "./bin/sesh.js"
+  },
   "scripts": {
     "start": "node scripts/start.js",
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:tui": "tsup",
+    "build:web": "tsc -b && vite build",
+    "prepare": "npm run build:tui && npm run build:web",
+    "test": "vitest run",
     "lint": "eslint .",
     "preview": "vite preview"
   },
   "dependencies": {
+    "ink": "^7.1.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-markdown": "^10.1.0",
@@ -28,8 +36,10 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.6.0",
+    "tsup": "^8.5.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
+    "vite": "^8.0.12",
+    "vitest": "^4.1.9"
   }
 }

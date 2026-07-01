@@ -1,6 +1,6 @@
-import type { Session } from '../../types/session'
-import type { FilterType } from '../../types/filter'
-import { formatCost, formatTokens } from '../../utils/pricing'
+import type { Session } from '../../../core/types/session'
+import type { FilterType } from '../../../core/types/filter'
+import { formatCost, formatTokens } from '../../../core/utils/pricing'
 import { SessionBrowser } from '../SessionBrowser/SessionBrowser'
 import styles from './Sidebar.module.css'
 

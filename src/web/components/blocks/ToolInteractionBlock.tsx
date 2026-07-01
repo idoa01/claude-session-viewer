@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm'
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { langFromPath } from '../../config/languages'
-import type { ToolInteractionBlock as ToolInteractionBlockType } from '../../types/session'
+import type { ToolInteractionBlock as ToolInteractionBlockType } from '../../../core/types/session'
 import styles from './ToolInteractionBlock.module.css'
 import textStyles from './TextBlock.module.css'
 

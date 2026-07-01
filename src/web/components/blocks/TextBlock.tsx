@@ -3,7 +3,7 @@ import remarkGfm from 'remark-gfm'
 import { PrismLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import '../../config/languages'
-import type { TextBlock as TextBlockType } from '../../types/session'
+import type { TextBlock as TextBlockType } from '../../../core/types/session'
 
 // oneDark with token colors boosted to full saturation/lightness
 const vividTheme: Record<string, React.CSSProperties> = {

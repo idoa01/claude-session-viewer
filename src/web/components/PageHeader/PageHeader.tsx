@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Session } from '../../types/session'
+import type { Session } from '../../../core/types/session'
 import styles from './PageHeader.module.css'
 
 type SortField = 'time' | 'price'
