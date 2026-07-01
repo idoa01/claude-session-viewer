@@ -9,11 +9,10 @@ type State =
   | { status: 'error'; message: string }
 
 export function useSessionLoader() {
-  const [state, setState] = useState<State>({ status: 'idle' })
+  const [state, setState] = useState<State>({ status: 'loading' })
 
   // Try fetching /session.jsonl on mount (CLI mode)
   useEffect(() => {
-    setState({ status: 'loading' })
     fetch('/session.jsonl')
       .then(r => {
         if (!r.ok) throw new Error('no file')

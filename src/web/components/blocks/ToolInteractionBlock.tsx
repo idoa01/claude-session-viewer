@@ -193,6 +193,26 @@ const diffTheme: Record<string, React.CSSProperties> = {
   },
 }
 
+function DiffLines({ lines, prefix, bg, lang }: { lines: string[]; prefix: string; bg: string; lang: string }) {
+  const code = lines.map(l => `${prefix} ${l}`).join('\n')
+  return (
+    <div style={{ background: bg }}>
+      <SyntaxHighlighter
+        language={lang}
+        style={diffTheme as never}
+        customStyle={{ margin: 0, padding: '0 12px', background: 'transparent', overflowX: 'auto' }}
+        PreTag="div"
+        wrapLines
+        lineProps={() => ({
+          style: { display: 'block', whiteSpace: 'pre' },
+        })}
+      >
+        {code}
+      </SyntaxHighlighter>
+    </div>
+  )
+}
+
 function EditDiff({ input }: { input: Record<string, unknown> }) {
   const filePath = String(input.file_path ?? '')
   const oldString = String(input.old_string ?? '')
@@ -202,26 +222,6 @@ function EditDiff({ input }: { input: Record<string, unknown> }) {
   const oldLines = oldString.split('\n')
   const newLines = newString.split('\n')
 
-  function DiffLines({ lines, prefix, bg }: { lines: string[]; prefix: string; bg: string }) {
-    const code = lines.map(l => `${prefix} ${l}`).join('\n')
-    return (
-      <div style={{ background: bg }}>
-        <SyntaxHighlighter
-          language={lang}
-          style={diffTheme as never}
-          customStyle={{ margin: 0, padding: '0 12px', background: 'transparent', overflowX: 'auto' }}
-          PreTag="div"
-          wrapLines
-          lineProps={(_lineNumber: number) => ({
-            style: { display: 'block', whiteSpace: 'pre' },
-          })}
-        >
-          {code}
-        </SyntaxHighlighter>
-      </div>
-    )
-  }
-
   return (
     <div className={styles.editDiff}>
       <div className={styles.diffHeader}>
@@ -229,10 +229,10 @@ function EditDiff({ input }: { input: Record<string, unknown> }) {
       </div>
       <div className={styles.diffBody}>
         {oldLines.length > 0 && oldString !== '' && (
-          <DiffLines lines={oldLines} prefix="-" bg="rgba(239,68,68,0.08)" />
+          <DiffLines lines={oldLines} prefix="-" bg="rgba(239,68,68,0.08)" lang={lang} />
         )}
         {newLines.length > 0 && newString !== '' && (
-          <DiffLines lines={newLines} prefix="+" bg="rgba(74,222,128,0.08)" />
+          <DiffLines lines={newLines} prefix="+" bg="rgba(74,222,128,0.08)" lang={lang} />
         )}
       </div>
     </div>
