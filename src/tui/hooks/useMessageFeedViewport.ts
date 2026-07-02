@@ -29,6 +29,15 @@ export interface MessageFeedViewport {
   jumpToTop: () => void
   jumpToBottom: () => void
   toggleExpandCursor: () => void
+  cycleTabCursor: () => void
+}
+
+// Number of AskUserQuestion tabs on a feed item, or 0 for anything else —
+// used to wrap Tab-cycling and to skip cache-key churn for non-AUQ blocks.
+function questionTabCount(item: FeedItem): number {
+  if (item.block.type !== 'tool_interaction' || item.block.name !== 'AskUserQuestion') return 0
+  const questions = item.block.input.questions
+  return Array.isArray(questions) ? questions.length : 0
 }
 
 // Owns scroll offset, cursor position, and the block-expansion set for a
@@ -43,13 +52,15 @@ export function useMessageFeedViewport(
   const [cache] = useState(() => new LineCountCache())
   const [position, setPosition] = useState({ scrollTop: 0, cursorIndex: 0 })
   const [expandedKeys, setExpandedKeys] = useState<ReadonlySet<string>>(new Set())
+  const [activeTabs, setActiveTabs] = useState<ReadonlyMap<string, number>>(new Map())
 
   const items = useMemo(() => buildFeedItems(messages), [messages])
 
   const isExpanded = (item: FeedItem) => expandedKeys.has(feedItemKey(item))
+  const activeTabOf = (item: FeedItem) => activeTabs.get(feedItemKey(item)) ?? 0
 
   const rendered: RenderedFeedItem[] = items.map(item => {
-    const { text, lineCount } = cache.get(item, width, isExpanded(item))
+    const { text, lineCount } = cache.get(item, width, isExpanded(item), activeTabOf(item))
     return { ...item, text, lineCount }
   })
   const lineCounts = rendered.map(r => r.lineCount)
@@ -100,6 +111,19 @@ export function useMessageFeedViewport(
     })
   }
 
+  function cycleTabCursor() {
+    const current = rendered[clampedCursor]
+    if (!current) return
+    const tabCount = questionTabCount(current)
+    if (tabCount <= 1) return
+    const key = feedItemKey(current)
+    setActiveTabs(prev => {
+      const next = new Map(prev)
+      next.set(key, ((prev.get(key) ?? 0) + 1) % tabCount)
+      return next
+    })
+  }
+
   const slice = computeVisibleSlice(lineCounts, clampedScrollTop, viewportHeight)
   const visible = slice.items.map(({ index, from, to }) => ({ item: rendered[index]!, index, from, to }))
 
@@ -116,5 +140,6 @@ export function useMessageFeedViewport(
     jumpToTop,
     jumpToBottom,
     toggleExpandCursor,
+    cycleTabCursor,
   }
 }

@@ -1,38 +1,24 @@
-import { Marked } from 'marked'
-import { markedTerminal } from 'marked-terminal'
 import wrapAnsi from 'wrap-ansi'
+import chalk from 'chalk'
 import type { Block, Message } from '../../core/types/session'
 import type { FeedItem } from './feedItems'
-
-// One marked instance per rendering width, since marked-terminal wraps prose to `width`.
-const markedByWidth = new Map<number, Marked>()
-
-function getMarked(width: number): Marked {
-  let instance = markedByWidth.get(width)
-  if (!instance) {
-    instance = new Marked()
-    instance.use(markedTerminal({ width, reflowText: true }) as Parameters<Marked['use']>[0])
-    markedByWidth.set(width, instance)
-  }
-  return instance
-}
+import { toolIcon, renderInputSummary, renderToolBlockBody, renderMarkdown } from '../blocks/toolBlocks'
 
 function renderTextBlock(text: string, width: number): string {
-  const rendered = getMarked(width).parse(text, { async: false })
-  return rendered.replace(/\n+$/, '')
+  return renderMarkdown(text, width)
 }
 
-function renderToolInteractionBlock(block: Block & { type: 'tool_interaction' }, expanded: boolean, width: number): string {
-  const header = `⚙ ${block.name}`
-  const inputPreview = JSON.stringify(block.input)
-  const lines = [header, inputPreview]
-  if (block.result) {
-    const content = block.result.truncated && !expanded
-      ? block.result.content.slice(0, 600) + ' …'
-      : block.result.content
-    lines.push(content)
-  }
-  return wrapAnsi(lines.join('\n'), width, { hard: true })
+function renderToolInteractionBlock(
+  block: Block & { type: 'tool_interaction' },
+  expanded: boolean,
+  width: number,
+  activeTab: number
+): string {
+  const icon = toolIcon(block.name)
+  const summary = renderInputSummary(block.name, block.input)
+  const header = summary ? `${icon} ${chalk.bold(block.name)} ${chalk.dim(summary)}` : `${icon} ${chalk.bold(block.name)}`
+  const body = renderToolBlockBody(block, expanded, { width, activeTab })
+  return wrapAnsi([header, body].join('\n'), width, { hard: true })
 }
 
 function formatHeader(message: Message, width: number): string {
@@ -43,12 +29,13 @@ function formatHeader(message: Message, width: number): string {
 
 // Renders a single feed item (a block, plus its message header if it's the
 // first block of a message) to the plain terminal text it would occupy, given
-// the current terminal width and whether it's expanded. Used both to display
-// the item and to count how many lines it occupies for viewport windowing.
-export function renderBlockText(item: FeedItem, width: number, expanded: boolean): string {
+// the current terminal width, whether it's expanded, and (for AskUserQuestion
+// blocks) which question tab is active. Used both to display the item and to
+// count how many lines it occupies for viewport windowing.
+export function renderBlockText(item: FeedItem, width: number, expanded: boolean, activeTab = 0): string {
   const body = item.block.type === 'text'
     ? renderTextBlock(item.block.text, width)
-    : renderToolInteractionBlock(item.block, expanded, width)
+    : renderToolInteractionBlock(item.block, expanded, width, activeTab)
   return item.isFirstBlockOfMessage ? `${formatHeader(item.message, width)}\n${body}` : body
 }
 

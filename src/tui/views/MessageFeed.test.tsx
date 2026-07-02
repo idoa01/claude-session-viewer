@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render } from 'ink-testing-library'
+import stripAnsi from 'strip-ansi'
 import { MessageFeed } from './MessageFeed'
 import type { Message } from '../../core/types/session'
 
@@ -109,5 +110,78 @@ describe('MessageFeed', () => {
     const narrowFrame = lastFrame() ?? ''
     expect(narrowFrame).not.toBe(wideFrame)
     expect(narrowFrame).toContain('message 0')
+  })
+
+  function makeToolMessage(uuid: string, block: Message['blocks'][number]): Message {
+    return {
+      uuid,
+      parentUuid: null,
+      role: 'assistant',
+      timestamp: '2026-01-01T00:00:00.000Z',
+      cwd: '/tmp',
+      blocks: [block],
+    }
+  }
+
+  it('renders an Edit block as a colored diff', () => {
+    const messages = [
+      makeToolMessage('a1', {
+        type: 'tool_interaction',
+        id: 't1',
+        name: 'Edit',
+        input: { file_path: '/a/b.ts', old_string: 'old line', new_string: 'new line' },
+      }),
+    ]
+    const { lastFrame } = render(
+      <MessageFeed messages={messages} width={80} height={20} onExit={() => {}} isActive={false} />
+    )
+    const text = stripAnsi(lastFrame() ?? '')
+    expect(text).toContain('old line')
+    expect(text).toContain('new line')
+  })
+
+  it('collapses a truncated tool result by default and expands it on Enter', async () => {
+    const longContent = 'y'.repeat(1000)
+    const messages = [
+      makeToolMessage('a1', {
+        type: 'tool_interaction',
+        id: 't1',
+        name: 'Bash',
+        input: { command: 'echo' },
+        result: { content: longContent, truncated: true },
+      }),
+    ]
+    const { stdin, lastFrame } = render(
+      <MessageFeed messages={messages} width={80} height={30} onExit={() => {}} isActive />
+    )
+    const collapsed = stripAnsi(lastFrame() ?? '').replace(/\s+/g, '')
+    expect(collapsed).not.toContain(longContent)
+
+    await pressKeys(stdin, ['\r'])
+    const expanded = stripAnsi(lastFrame() ?? '').replace(/\s+/g, '')
+    expect(expanded).toContain(longContent)
+  })
+
+  it('cycles AskUserQuestion tabs with Tab', async () => {
+    const messages = [
+      makeToolMessage('a1', {
+        type: 'tool_interaction',
+        id: 't1',
+        name: 'AskUserQuestion',
+        input: {
+          questions: [
+            { question: 'Pick a color', header: 'Color', options: [{ label: 'red' }] },
+            { question: 'Pick a size', header: 'Size', options: [{ label: 'small' }] },
+          ],
+        },
+      }),
+    ]
+    const { stdin, lastFrame } = render(
+      <MessageFeed messages={messages} width={80} height={20} onExit={() => {}} isActive />
+    )
+    expect(stripAnsi(lastFrame() ?? '')).toContain('Pick a color')
+
+    await pressKeys(stdin, ['\t'])
+    expect(stripAnsi(lastFrame() ?? '')).toContain('Pick a size')
   })
 })

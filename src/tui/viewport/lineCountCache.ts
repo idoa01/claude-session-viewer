@@ -7,24 +7,24 @@ export interface CachedRender {
 }
 
 // Caches each block's rendered text/line-count keyed by (terminal width, block
-// content, expansion state), so scrolling never re-renders blocks that haven't
-// changed. Resizing the terminal invalidates everything at once, since every
-// entry's rendering depends on width.
+// content, expansion state, active AskUserQuestion tab), so scrolling never
+// re-renders blocks that haven't changed. Resizing the terminal invalidates
+// everything at once, since every entry's rendering depends on width.
 export class LineCountCache {
   private width = -1
   private entries = new Map<string, CachedRender>()
 
-  get(item: FeedItem, width: number, expanded: boolean): CachedRender {
+  get(item: FeedItem, width: number, expanded: boolean, activeTab = 0): CachedRender {
     if (width !== this.width) {
       this.width = width
       this.entries.clear()
     }
 
-    const key = `${feedItemKey(item)}:${expanded ? 1 : 0}`
+    const key = `${feedItemKey(item)}:${expanded ? 1 : 0}:${activeTab}`
     const cached = this.entries.get(key)
     if (cached) return cached
 
-    const text = renderBlockText(item, width, expanded)
+    const text = renderBlockText(item, width, expanded, activeTab)
     const rendered: CachedRender = { text, lineCount: countLines(text) }
     this.entries.set(key, rendered)
     return rendered

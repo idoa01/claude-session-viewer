@@ -51,6 +51,10 @@ export function MessageFeed({ messages, width, height, onExit, isActive }: Props
       viewport.toggleExpandCursor()
       return
     }
+    if (key.tab) {
+      viewport.cycleTabCursor()
+      return
+    }
   }, { isActive })
 
   if (messages.length === 0) {
