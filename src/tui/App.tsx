@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
-import { Box, Text, useInput } from 'ink'
+import { Box, Text, useApp, useInput } from 'ink'
 import { homedir } from 'node:os'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { discoverSessions, type SessionEntry } from './session-discovery/discoverSessions'
 import { SessionBrowser } from './views/SessionBrowser'
 import { MessageFeed } from './views/MessageFeed'
@@ -10,6 +10,17 @@ import { useTerminalSize } from './hooks/useTerminalSize'
 
 const PROJECTS_ROOT = join(homedir(), '.claude', 'projects')
 const SIDEBAR_WIDTH = 36
+
+function directModeEntry(filePath: string): SessionEntry {
+  return {
+    sessionId: basename(filePath).replace(/\.jsonl$/, ''),
+    filePath,
+    projectDirName: '',
+    projectLabel: '',
+    aiTitle: undefined,
+    lastModified: 0,
+  }
+}
 
 type State =
   | { status: 'loading' }
@@ -61,17 +72,34 @@ function SelectedSession({ entry, terminalWidth, terminalHeight, onExit }: {
   )
 }
 
-export default function App() {
+interface AppProps {
+  directModePath?: string
+}
+
+export default function App({ directModePath }: AppProps) {
   const [state, setState] = useState<State>({ status: 'loading' })
   const { columns, rows } = useTerminalSize()
+  const { exit } = useApp()
 
   useEffect(() => {
+    if (directModePath) return
     let cancelled = false
     discoverSessions(PROJECTS_ROOT).then(entries => {
       if (!cancelled) setState({ status: 'ready', entries })
     })
     return () => { cancelled = true }
-  }, [])
+  }, [directModePath])
+
+  if (directModePath) {
+    return (
+      <SelectedSession
+        entry={directModeEntry(directModePath)}
+        terminalWidth={columns}
+        terminalHeight={rows}
+        onExit={() => exit()}
+      />
+    )
+  }
 
   if (state.status === 'loading') {
     return <Text dimColor>Scanning {PROJECTS_ROOT}…</Text>
