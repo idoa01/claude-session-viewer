@@ -7,6 +7,7 @@ import { SessionBrowser } from './views/SessionBrowser'
 import { MessageFeed } from './views/MessageFeed'
 import { useSession } from './hooks/useSession'
 import { useTerminalSize } from './hooks/useTerminalSize'
+import { useLiveHandoff, type LiveHandoffStatus } from './live-handoff/useLiveHandoff'
 
 const PROJECTS_ROOT = join(homedir(), '.claude', 'projects')
 const SIDEBAR_WIDTH = 36
@@ -27,17 +28,20 @@ type State =
   | { status: 'ready'; entries: SessionEntry[] }
   | { status: 'selected'; entry: SessionEntry; entries: SessionEntry[] }
 
-function SelectedSession({ entry, terminalWidth, terminalHeight, onExit }: {
+function SelectedSession({ entry, terminalWidth, terminalHeight, onExit, onLiveHandoff, handoffStatus }: {
   entry: SessionEntry
   terminalWidth: number
   terminalHeight: number
   onExit: () => void
+  onLiveHandoff: () => void
+  handoffStatus: LiveHandoffStatus
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const loadState = useSession(entry.filePath)
 
   useInput(input => {
     if (input === 's') setSidebarCollapsed(v => !v)
+    if (input === 'o') onLiveHandoff()
   })
 
   const feedWidth = sidebarCollapsed ? terminalWidth : terminalWidth - SIDEBAR_WIDTH - 1
@@ -67,7 +71,11 @@ function SelectedSession({ entry, terminalWidth, terminalHeight, onExit }: {
           isActive
         />
       </Box>
-      <Text dimColor>j/k scroll · Ctrl-F/B page · g/G top/bottom · Enter/Space expand · s sidebar · Esc/q back</Text>
+      <Text dimColor>
+        j/k scroll · Ctrl-F/B page · g/G top/bottom · Enter/Space expand · s sidebar · o handoff · Esc/q back
+        {handoffStatus.state === 'active' && ` · live at ${handoffStatus.url}`}
+        {handoffStatus.state === 'error' && ` · handoff failed: ${handoffStatus.message}`}
+      </Text>
     </Box>
   )
 }
@@ -80,6 +88,7 @@ export default function App({ directModePath }: AppProps) {
   const [state, setState] = useState<State>({ status: 'loading' })
   const { columns, rows } = useTerminalSize()
   const { exit } = useApp()
+  const { status: handoffStatus, trigger: triggerLiveHandoff } = useLiveHandoff()
 
   useEffect(() => {
     if (directModePath) return
@@ -97,6 +106,8 @@ export default function App({ directModePath }: AppProps) {
         terminalWidth={columns}
         terminalHeight={rows}
         onExit={() => exit()}
+        onLiveHandoff={() => triggerLiveHandoff(directModePath)}
+        handoffStatus={handoffStatus}
       />
     )
   }
@@ -112,6 +123,8 @@ export default function App({ directModePath }: AppProps) {
         terminalWidth={columns}
         terminalHeight={rows}
         onExit={() => setState({ status: 'ready', entries: state.entries })}
+        onLiveHandoff={() => triggerLiveHandoff(state.entry.filePath)}
+        handoffStatus={handoffStatus}
       />
     )
   }
@@ -129,6 +142,7 @@ export default function App({ directModePath }: AppProps) {
     <SessionBrowser
       entries={state.entries}
       onSelect={entry => setState({ status: 'selected', entry, entries: state.entries })}
+      onLiveHandoff={entry => triggerLiveHandoff(entry.filePath)}
     />
   )
 }

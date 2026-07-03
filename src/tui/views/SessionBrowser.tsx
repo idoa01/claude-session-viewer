@@ -6,6 +6,7 @@ import type { SessionEntry } from '../session-discovery/discoverSessions'
 interface Props {
   entries: SessionEntry[]
   onSelect: (entry: SessionEntry) => void
+  onLiveHandoff?: (entry: SessionEntry) => void
 }
 
 function formatDate(ms: number): string {
@@ -25,7 +26,7 @@ function matchesQuery(entry: SessionEntry, query: string): boolean {
 
 const LIST_ROWS_RESERVED = 6 // header + filter box + status line + margins
 
-export function SessionBrowser({ entries, onSelect }: Props) {
+export function SessionBrowser({ entries, onSelect, onLiveHandoff }: Props) {
   const { exit } = useApp()
   const { stdout } = useStdout()
   const [query, setQuery] = useState('')
@@ -66,6 +67,10 @@ export function SessionBrowser({ entries, onSelect }: Props) {
     }
     if (key.return && filtered.length > 0) {
       onSelect(filtered[clampedIndex])
+      return
+    }
+    if (input === 'o' && filtered.length > 0) {
+      onLiveHandoff?.(filtered[clampedIndex])
     }
   }, { isActive: true })
 
@@ -112,7 +117,7 @@ export function SessionBrowser({ entries, onSelect }: Props) {
       </Box>
       <Box marginTop={1}>
         <Text dimColor>
-          {filterFocused ? 'Esc unfocus filter · Enter jump to first match' : 'j/k move · / filter · Enter open · q quit'}
+          {filterFocused ? 'Esc unfocus filter · Enter jump to first match' : 'j/k move · / filter · Enter open · o handoff · q quit'}
         </Text>
       </Box>
     </Box>
