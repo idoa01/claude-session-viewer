@@ -134,4 +134,63 @@ describe('startLiveHandoffServer', () => {
       ws.on('error', rejectTest)
     })
   })
+
+  it('includes a version header on /active-session that starts at 0', async () => {
+    const dir = await makeDistDir()
+    dirsToClean.push(dir)
+    const sessionDir = await mkdtemp(join(tmpdir(), 'sesh-handoff-session-'))
+    dirsToClean.push(sessionDir)
+    const sessionPath = join(sessionDir, 'session.jsonl')
+    await writeFile(sessionPath, '{"type":"user"}\n')
+
+    const server = await startLiveHandoffServer(dir)
+    servers.push(server)
+    const token = tokenFromUrl(server.url)
+    server.setActiveSession(sessionPath)
+
+    const res = await fetch(`http://127.0.0.1:${server.port}/active-session`, {
+      headers: { 'x-sesh-token': token },
+    })
+    expect(res.headers.get('x-session-version')).toBe('1')
+  })
+
+  it('broadcasts a version+sessionId event to connected clients on session switch', async () => {
+    const { server, token } = await setup()
+    const ws = new WebSocket(`ws://127.0.0.1:${server.port}/`, [token])
+    await new Promise<void>((resolveOpen, rejectOpen) => {
+      ws.on('open', () => resolveOpen())
+      ws.on('error', rejectOpen)
+    })
+
+    const sessionDir = await mkdtemp(join(tmpdir(), 'sesh-handoff-session-'))
+    dirsToClean.push(sessionDir)
+    const sessionPath = join(sessionDir, 'session.jsonl')
+    await writeFile(sessionPath, '{"type":"user"}\n')
+
+    const message = new Promise<{ version: number; sessionId: string | null }>(resolveMessage => {
+      ws.on('message', data => resolveMessage(JSON.parse(data.toString())))
+    })
+    server.setActiveSession(sessionPath)
+
+    const event = await message
+    expect(event.version).toBe(1)
+    expect(event.sessionId).toBe('session.jsonl')
+    ws.close()
+  })
+
+  it('increments the version on every subsequent session switch', async () => {
+    const { server, token } = await setup()
+    const sessionDir = await mkdtemp(join(tmpdir(), 'sesh-handoff-session-'))
+    dirsToClean.push(sessionDir)
+    const sessionPath = join(sessionDir, 'session.jsonl')
+    await writeFile(sessionPath, '{"type":"user"}\n')
+
+    server.setActiveSession(sessionPath)
+    server.setActiveSession(sessionPath)
+
+    const res = await fetch(`http://127.0.0.1:${server.port}/active-session`, {
+      headers: { 'x-sesh-token': token },
+    })
+    expect(res.headers.get('x-session-version')).toBe('2')
+  })
 })

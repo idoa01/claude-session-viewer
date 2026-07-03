@@ -1,8 +1,9 @@
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from 'node:http'
 import { randomBytes } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
+import { basename } from 'node:path'
 import sirv from 'sirv'
-import { WebSocketServer } from 'ws'
+import { WebSocketServer, WebSocket } from 'ws'
 
 export interface LiveHandoffServer {
   url: string
@@ -23,6 +24,7 @@ function readToken(req: IncomingMessage): string | undefined {
 export function startLiveHandoffServer(distDir: string): Promise<LiveHandoffServer> {
   const token = generateToken()
   let activeSessionPath: string | undefined
+  let version = 0
 
   const serveStatic = sirv(distDir, { single: 'index.html', dev: false })
 
@@ -41,18 +43,25 @@ export function startLiveHandoffServer(distDir: string): Promise<LiveHandoffServ
       res.end('Unauthorized')
       return
     }
+    // Read the version at the moment we serve, so the response header always
+    // matches the state this particular response actually reflects — not the
+    // version at request time, which could be stale if a broadcast races in.
+    const responseVersion = version
     if (!activeSessionPath) {
-      res.writeHead(404, { 'Content-Type': 'text/plain' })
+      res.writeHead(404, { 'Content-Type': 'text/plain', 'X-Session-Version': String(responseVersion) })
       res.end('No active session')
       return
     }
     readFile(activeSessionPath, 'utf8')
       .then(text => {
-        res.writeHead(200, { 'Content-Type': 'application/x-ndjson' })
+        res.writeHead(200, {
+          'Content-Type': 'application/x-ndjson',
+          'X-Session-Version': String(responseVersion),
+        })
         res.end(text)
       })
       .catch((e: unknown) => {
-        res.writeHead(500, { 'Content-Type': 'text/plain' })
+        res.writeHead(500, { 'Content-Type': 'text/plain', 'X-Session-Version': String(responseVersion) })
         res.end(e instanceof Error ? e.message : 'Failed to read session')
       })
   }
@@ -81,6 +90,13 @@ export function startLiveHandoffServer(distDir: string): Promise<LiveHandoffServ
     ws.on('error', () => {})
   })
 
+  function broadcast() {
+    const payload = JSON.stringify({ version, sessionId: activeSessionPath ? basename(activeSessionPath) : null })
+    for (const client of wss.clients) {
+      if (client.readyState === WebSocket.OPEN) client.send(payload)
+    }
+  }
+
   return new Promise((resolvePromise, reject) => {
     server.on('error', reject)
     server.listen(0, '127.0.0.1', () => {
@@ -95,6 +111,8 @@ export function startLiveHandoffServer(distDir: string): Promise<LiveHandoffServ
         port,
         setActiveSession(filePath: string) {
           activeSessionPath = filePath
+          version += 1
+          broadcast()
         },
         close() {
           return new Promise<void>(resolveClose => {

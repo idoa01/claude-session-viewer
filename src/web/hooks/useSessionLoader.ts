@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import type { Session } from '../../core/types/session'
 import { parseJsonl } from '../../core/utils/parseJsonl'
 import { readAndClearLiveHandoffToken } from './useLiveHandoffToken'
+import { createVersionGate } from './liveHandoffSync'
 
 type State =
   | { status: 'idle' }
@@ -16,16 +17,37 @@ export function useSessionLoader() {
   // set by the TUI's handoff server — see src/tui/live-handoff) or fall back to
   // ADR 0001's normal CLI-mode fetch of /session.jsonl.
   useEffect(() => {
-    const token = readAndClearLiveHandoffToken()
-    if (token) {
-      fetch('/active-session', { headers: { 'x-sesh-token': token } })
-        .then(r => {
-          if (!r.ok) throw new Error('no active session')
-          return r.text()
-        })
-        .then(text => setState({ status: 'loaded', session: parseJsonl(text) }))
-        .catch(() => setState({ status: 'idle' }))
-      return
+    const maybeToken = readAndClearLiveHandoffToken()
+    if (maybeToken) {
+      const token: string = maybeToken
+      const versionGate = createVersionGate()
+
+      function fetchActiveSession() {
+        fetch('/active-session', { headers: { 'x-sesh-token': token } })
+          .then(r => {
+            if (!r.ok) throw new Error('no active session')
+            const headerVersion = Number(r.headers.get('X-Session-Version'))
+            return r.text().then(text => ({ text, version: headerVersion }))
+          })
+          .then(({ text, version }) => {
+            if (versionGate.isStale(version)) return
+            versionGate.recordSeen(version)
+            setState({ status: 'loaded', session: parseJsonl(text) })
+          })
+          .catch(() => setState({ status: 'idle' }))
+      }
+
+      // Fetch immediately so the tab shows whatever was active when it was
+      // opened, rather than waiting for the *next* session switch to broadcast.
+      fetchActiveSession()
+
+      const ws = new WebSocket(`ws://${location.host}/`, [token])
+      ws.onmessage = event => {
+        const data = JSON.parse(event.data as string) as { version: number; sessionId: string | null }
+        if (versionGate.isStale(data.version) || data.version === versionGate.latestSeenVersion) return
+        fetchActiveSession()
+      }
+      return () => ws.close()
     }
 
     fetch('/session.jsonl')
