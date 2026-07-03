@@ -1,12 +1,18 @@
 import { useEffect, useState } from 'react'
 import { readFile } from 'node:fs/promises'
 import { parseJsonl } from '../../core/utils/parseJsonl'
+import { validateJsonl } from '../../core/utils/validateJsonl'
 import type { Session } from '../../core/types/session'
 
 export type SessionLoadState =
   | { status: 'loading' }
   | { status: 'ready'; session: Session }
   | { status: 'error'; message: string }
+
+function describeFailures(filePath: string, failures: { line: number; message: string }[]): string {
+  const detail = failures.map(f => `line ${f.line}: ${f.message}`).join('; ')
+  return `${filePath} has malformed content (${detail})`
+}
 
 export function useSession(filePath: string): SessionLoadState {
   // Tag each result with the filePath it was loaded for, so a filePath change
@@ -22,6 +28,11 @@ export function useSession(filePath: string): SessionLoadState {
     readFile(filePath, 'utf8')
       .then(raw => {
         if (cancelled) return
+        const failures = validateJsonl(raw)
+        if (failures.length > 0) {
+          setResult({ filePath, state: { status: 'error', message: describeFailures(filePath, failures) } })
+          return
+        }
         setResult({ filePath, state: { status: 'ready', session: parseJsonl(raw) } })
       })
       .catch((e: unknown) => {
