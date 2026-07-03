@@ -108,6 +108,55 @@ describe('discoverSessions', () => {
     }
   })
 
+  it('marks an empty file as a visible error entry instead of dropping it', async () => {
+    const root = await makeTempRoot()
+    dirsToClean.push(root)
+    const projectDir = join(root, 'Users-x-code-my-project')
+    await mkdir(projectDir)
+    await writeFile(join(projectDir, 'empty.jsonl'), '')
+
+    const entries = await discoverSessions(root)
+    expect(entries).toHaveLength(1)
+    expect(entries[0].sessionId).toBe('empty')
+    expect(entries[0].error).toBe('no valid entries found')
+  })
+
+  it('marks a non-JSONL file as a visible error entry instead of dropping it', async () => {
+    const root = await makeTempRoot()
+    dirsToClean.push(root)
+    const projectDir = join(root, 'Users-x-code-my-project')
+    await mkdir(projectDir)
+    await writeFile(join(projectDir, 'garbage.jsonl'), 'not json\nstill not json\n')
+
+    const entries = await discoverSessions(root)
+    expect(entries).toHaveLength(1)
+    expect(entries[0].error).toBe('no valid entries found')
+  })
+
+  it('keeps scanning the rest of the list when one file is unreadable and another is empty', async () => {
+    const root = await makeTempRoot()
+    dirsToClean.push(root)
+    const projectDir = join(root, 'Users-x-code-my-project')
+    await mkdir(projectDir)
+    const unreadablePath = join(projectDir, 'unreadable.jsonl')
+    await writeFile(unreadablePath, line({ type: 'ai-title', aiTitle: 'Secret' }))
+    await chmod(unreadablePath, 0o000)
+    await writeFile(join(projectDir, 'empty.jsonl'), '')
+    await writeFile(join(projectDir, 'good.jsonl'), line({ type: 'ai-title', aiTitle: 'Good session' }))
+
+    try {
+      const entries = await discoverSessions(root)
+      expect(entries).toHaveLength(3)
+      const good = entries.find(e => e.sessionId === 'good')
+      expect(good?.error).toBeUndefined()
+      expect(good?.aiTitle).toBe('Good session')
+      expect(entries.find(e => e.sessionId === 'unreadable')?.error).toBeDefined()
+      expect(entries.find(e => e.sessionId === 'empty')?.error).toBe('no valid entries found')
+    } finally {
+      await chmod(unreadablePath, 0o644)
+    }
+  })
+
   it('bounds concurrent file reads without dropping any entries across many files', async () => {
     const root = await makeTempRoot()
     dirsToClean.push(root)

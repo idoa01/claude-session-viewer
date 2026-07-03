@@ -20,13 +20,18 @@ const DISCOVERY_CONCURRENCY = 16
 
 // Reads a bounded prefix of the file to find the ai-title line and the first
 // cwd-bearing line, stopping once both are found — never runs the full
-// parseJsonl pipeline just to build the session list.
-async function scanMetadata(filePath: string): Promise<{ aiTitle?: string; cwd?: string }> {
+// parseJsonl pipeline just to build the session list. `hasValidJson` reports
+// whether any scanned line parsed as JSON at all, so callers can flag empty
+// or non-JSONL files as discovery-time errors without a second pass.
+async function scanMetadata(
+  filePath: string
+): Promise<{ aiTitle?: string; cwd?: string; hasValidJson: boolean }> {
   const stream = createReadStream(filePath, { encoding: 'utf8' })
   const rl = createInterface({ input: stream })
 
   let aiTitle: string | undefined
   let cwd: string | undefined
+  let hasValidJson = false
   let lineCount = 0
 
   try {
@@ -34,6 +39,7 @@ async function scanMetadata(filePath: string): Promise<{ aiTitle?: string; cwd?:
       lineCount++
       let obj: Record<string, unknown>
       try { obj = JSON.parse(line) } catch { continue }
+      hasValidJson = true
 
       if (aiTitle === undefined && obj.type === 'ai-title' && typeof obj.aiTitle === 'string') {
         aiTitle = obj.aiTitle
@@ -49,7 +55,7 @@ async function scanMetadata(filePath: string): Promise<{ aiTitle?: string; cwd?:
     stream.destroy()
   }
 
-  return { aiTitle, cwd }
+  return { aiTitle, cwd, hasValidJson }
 }
 
 async function discoverProjectSessions(
@@ -85,7 +91,7 @@ async function discoverProjectSessions(
       }
 
       try {
-        const { aiTitle, cwd } = await scanMetadata(filePath)
+        const { aiTitle, cwd, hasValidJson } = await scanMetadata(filePath)
         return {
           sessionId,
           filePath,
@@ -93,6 +99,7 @@ async function discoverProjectSessions(
           projectLabel: deriveProjectLabel(projectDirName, cwd),
           aiTitle,
           lastModified,
+          error: hasValidJson ? undefined : 'no valid entries found',
         }
       } catch (e) {
         return {
