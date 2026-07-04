@@ -30,8 +30,7 @@ export function useSessionLoader() {
             return r.text().then(text => ({ text, version: headerVersion }))
           })
           .then(({ text, version }) => {
-            if (versionGate.isStale(version)) return
-            versionGate.recordSeen(version)
+            if (versionGate.accept(version) === 'stale') return
             setState({ status: 'loaded', session: parseJsonl(text) })
           })
           .catch(() => setState({ status: 'idle' }))
@@ -44,7 +43,8 @@ export function useSessionLoader() {
       const ws = new WebSocket(`ws://${location.host}/`, [token])
       ws.onmessage = event => {
         const data = JSON.parse(event.data as string) as { version: number; sessionId: string | null }
-        if (versionGate.isStale(data.version) || data.version === versionGate.latestSeenVersion) return
+        const decision = versionGate.accept(data.version)
+        if (decision === 'stale' || decision === 'current') return
         fetchActiveSession()
       }
       return () => ws.close()

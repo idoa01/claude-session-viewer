@@ -1,16 +1,25 @@
+type VersionGateDecision = 'advanced' | 'current' | 'stale' | 'unversioned'
+
+interface VersionGate {
+  accept(version: number): VersionGateDecision
+  readonly latestSeenVersion: number
+}
+
 // Tracks the highest session version seen so far (from a WebSocket broadcast
-// or an /active-session response header) and decides whether a given
-// response is stale — i.e. a slower fetch for an older session resolved
-// after a newer one already landed (story 19).
-export function createVersionGate() {
+// or an /active-session response header). Accepting a version is atomic:
+// callers should never separately "check stale" and "record seen", because a
+// broadcast must be recorded before the fetch it triggers can race older work.
+export function createVersionGate(): VersionGate {
   let latestSeenVersion = -1
 
   return {
-    isStale(version: number): boolean {
-      return Number.isFinite(version) && version < latestSeenVersion
-    },
-    recordSeen(version: number): void {
-      if (Number.isFinite(version) && version > latestSeenVersion) latestSeenVersion = version
+    accept(version: number): VersionGateDecision {
+      if (!Number.isFinite(version)) return 'unversioned'
+      if (version < latestSeenVersion) return 'stale'
+      if (version === latestSeenVersion) return 'current'
+
+      latestSeenVersion = version
+      return 'advanced'
     },
     get latestSeenVersion() {
       return latestSeenVersion
