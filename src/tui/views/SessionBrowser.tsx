@@ -1,12 +1,12 @@
 import { useMemo, useState } from 'react'
 import { Box, Text, useApp, useInput, useStdout } from 'ink'
 import TextInput from 'ink-text-input'
-import type { SessionEntry } from '../session-discovery/discoverSessions'
+import type { AvailableSessionEntry, SessionEntry } from '../session-discovery/discoverSessions'
 
 interface Props {
   entries: SessionEntry[]
-  onSelect: (entry: SessionEntry) => void
-  onLiveHandoff?: (entry: SessionEntry) => void
+  onSelect: (entry: AvailableSessionEntry) => void
+  onLiveHandoff?: (entry: AvailableSessionEntry) => void
 }
 
 function formatDate(ms: number): string {
@@ -66,11 +66,13 @@ export function SessionBrowser({ entries, onSelect, onLiveHandoff }: Props) {
       return
     }
     if (key.return && filtered.length > 0) {
-      onSelect(filtered[clampedIndex])
+      const selected = filtered[clampedIndex]
+      if (selected?.status === 'available') onSelect(selected)
       return
     }
     if (input === 'o' && filtered.length > 0) {
-      onLiveHandoff?.(filtered[clampedIndex])
+      const selected = filtered[clampedIndex]
+      if (selected?.status === 'available') onLiveHandoff?.(selected)
     }
   }, { isActive: true })
 
@@ -102,7 +104,7 @@ export function SessionBrowser({ entries, onSelect, onLiveHandoff }: Props) {
         {visible.map((entry, i) => {
           const index = windowStart + i
           const isSelected = index === clampedIndex
-          const title = entry.error
+          const title = entry.status === 'unavailable'
             ? `⚠ ${entry.error}`
             : entry.aiTitle ?? entry.sessionId.slice(0, 8)
           return (

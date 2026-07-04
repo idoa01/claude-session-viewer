@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Box, Text, useApp, useInput } from 'ink'
 import { homedir } from 'node:os'
 import { basename, join } from 'node:path'
-import { discoverSessions, type SessionEntry } from './session-discovery/discoverSessions'
+import { discoverSessions, type AvailableSessionEntry, type SessionEntry } from './session-discovery/discoverSessions'
 import { SessionBrowser } from './views/SessionBrowser'
 import { MessageFeed } from './views/MessageFeed'
 import { useSession } from './hooks/useSession'
@@ -12,8 +12,9 @@ import { useLiveHandoff, type LiveHandoffStatus } from './live-handoff/useLiveHa
 const PROJECTS_ROOT = join(homedir(), '.claude', 'projects')
 const SIDEBAR_WIDTH = 36
 
-function directModeEntry(filePath: string): SessionEntry {
+function directModeEntry(filePath: string): AvailableSessionEntry {
   return {
+    status: 'available',
     sessionId: basename(filePath).replace(/\.jsonl$/, ''),
     filePath,
     projectDirName: '',
@@ -26,10 +27,10 @@ function directModeEntry(filePath: string): SessionEntry {
 type State =
   | { status: 'loading' }
   | { status: 'ready'; entries: SessionEntry[] }
-  | { status: 'selected'; entry: SessionEntry; entries: SessionEntry[] }
+  | { status: 'selected'; entry: AvailableSessionEntry; entries: SessionEntry[] }
 
 function SelectedSession({ entry, terminalWidth, terminalHeight, onExit, onLiveHandoff, handoffStatus }: {
-  entry: SessionEntry
+  entry: AvailableSessionEntry
   terminalWidth: number
   terminalHeight: number
   onExit: () => void
@@ -39,7 +40,11 @@ function SelectedSession({ entry, terminalWidth, terminalHeight, onExit, onLiveH
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const loadState = useSession(entry.filePath)
 
-  useInput(input => {
+  useInput((input, key) => {
+    if (loadState.status === 'error') {
+      if (input === 'q' || key.escape) onExit()
+      return
+    }
     if (input === 's') setSidebarCollapsed(v => !v)
     if (input === 'o') onLiveHandoff()
   })
@@ -51,7 +56,12 @@ function SelectedSession({ entry, terminalWidth, terminalHeight, onExit, onLiveH
     return <Text dimColor>Loading {entry.filePath}…</Text>
   }
   if (loadState.status === 'error') {
-    return <Text color="red">Failed to load {entry.filePath}: {loadState.message}</Text>
+    return (
+      <Box flexDirection="column">
+        <Text color="red">Failed to load {entry.filePath}: {loadState.message}</Text>
+        <Text dimColor>Esc/q back</Text>
+      </Box>
+    )
   }
 
   return (

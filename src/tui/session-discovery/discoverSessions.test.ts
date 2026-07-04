@@ -43,9 +43,9 @@ describe('discoverSessions', () => {
     const entries = await discoverSessions(root)
     expect(entries).toHaveLength(1)
     expect(entries[0].sessionId).toBe('sess-1')
+    expect(entries[0].status).toBe('available')
     expect(entries[0].aiTitle).toBe('Fix the login bug')
     expect(entries[0].projectLabel).toBe('code/my-project')
-    expect(entries[0].error).toBeUndefined()
   })
 
   it('falls back to the encoded-directory-name split when no cwd line is found', async () => {
@@ -102,7 +102,8 @@ describe('discoverSessions', () => {
       const entries = await discoverSessions(root)
       expect(entries).toHaveLength(1)
       expect(entries[0].sessionId).toBe('unreadable')
-      expect(entries[0].error).toBeDefined()
+      expect(entries[0].status).toBe('unavailable')
+      if (entries[0].status === 'unavailable') expect(entries[0].error).toBeDefined()
     } finally {
       await chmod(filePath, 0o644)
     }
@@ -118,7 +119,8 @@ describe('discoverSessions', () => {
     const entries = await discoverSessions(root)
     expect(entries).toHaveLength(1)
     expect(entries[0].sessionId).toBe('empty')
-    expect(entries[0].error).toBe('no valid entries found')
+    expect(entries[0].status).toBe('unavailable')
+    if (entries[0].status === 'unavailable') expect(entries[0].error).toBe('no valid entries found')
   })
 
   it('marks a non-JSONL file as a visible error entry instead of dropping it', async () => {
@@ -130,7 +132,26 @@ describe('discoverSessions', () => {
 
     const entries = await discoverSessions(root)
     expect(entries).toHaveLength(1)
-    expect(entries[0].error).toBe('no valid entries found')
+    expect(entries[0].status).toBe('unavailable')
+    if (entries[0].status === 'unavailable') expect(entries[0].error).toBe('no valid entries found')
+  })
+
+  it('stops scanning after the bounded prefix even when every prefix line is invalid JSON', async () => {
+    const root = await makeTempRoot()
+    dirsToClean.push(root)
+    const projectDir = join(root, 'Users-x-code-my-project')
+    await mkdir(projectDir)
+    const content = [
+      ...Array.from({ length: 51 }, (_, i) => `not-json-${i}`),
+      line({ type: 'ai-title', aiTitle: 'Too late' }),
+    ].join('\n')
+    await writeFile(join(projectDir, 'garbage-prefix.jsonl'), content)
+
+    const entries = await discoverSessions(root)
+    expect(entries).toHaveLength(1)
+    expect(entries[0].status).toBe('unavailable')
+    expect(entries[0].aiTitle).toBeUndefined()
+    if (entries[0].status === 'unavailable') expect(entries[0].error).toBe('no valid entries found')
   })
 
   it('keeps scanning the rest of the list when one file is unreadable and another is empty', async () => {
@@ -148,10 +169,14 @@ describe('discoverSessions', () => {
       const entries = await discoverSessions(root)
       expect(entries).toHaveLength(3)
       const good = entries.find(e => e.sessionId === 'good')
-      expect(good?.error).toBeUndefined()
+      expect(good?.status).toBe('available')
       expect(good?.aiTitle).toBe('Good session')
-      expect(entries.find(e => e.sessionId === 'unreadable')?.error).toBeDefined()
-      expect(entries.find(e => e.sessionId === 'empty')?.error).toBe('no valid entries found')
+      const unreadable = entries.find(e => e.sessionId === 'unreadable')
+      expect(unreadable?.status).toBe('unavailable')
+      if (unreadable?.status === 'unavailable') expect(unreadable.error).toBeDefined()
+      const empty = entries.find(e => e.sessionId === 'empty')
+      expect(empty?.status).toBe('unavailable')
+      if (empty?.status === 'unavailable') expect(empty.error).toBe('no valid entries found')
     } finally {
       await chmod(unreadablePath, 0o644)
     }

@@ -5,15 +5,18 @@ import { join } from 'node:path'
 import pLimit from 'p-limit'
 import { deriveProjectLabel } from '../../core/projectLabel'
 
-export interface SessionEntry {
+interface BaseSessionEntry {
   sessionId: string
   filePath: string
   projectDirName: string
   projectLabel: string
   aiTitle: string | undefined
   lastModified: number
-  error?: string
 }
+
+export type AvailableSessionEntry = BaseSessionEntry & { status: 'available' }
+export type UnavailableSessionEntry = BaseSessionEntry & { status: 'unavailable'; error: string }
+export type SessionEntry = AvailableSessionEntry | UnavailableSessionEntry
 
 const SCAN_MAX_LINES = 50
 const DISCOVERY_CONCURRENCY = 16
@@ -37,17 +40,20 @@ async function scanMetadata(
   try {
     for await (const line of rl) {
       lineCount++
-      let obj: Record<string, unknown>
-      try { obj = JSON.parse(line) } catch { continue }
-      hasValidJson = true
 
-      if (aiTitle === undefined && obj.type === 'ai-title' && typeof obj.aiTitle === 'string') {
-        aiTitle = obj.aiTitle
-      }
-      if (cwd === undefined && typeof obj.cwd === 'string') {
-        cwd = obj.cwd
-      }
+      try {
+        const obj = JSON.parse(line) as Record<string, unknown>
+        hasValidJson = true
 
+        if (aiTitle === undefined && obj.type === 'ai-title' && typeof obj.aiTitle === 'string') {
+          aiTitle = obj.aiTitle
+        }
+        if (cwd === undefined && typeof obj.cwd === 'string') {
+          cwd = obj.cwd
+        }
+      } catch {
+        // Invalid prefix lines still count toward the cheap discovery budget.
+      }
       if ((aiTitle !== undefined && cwd !== undefined) || lineCount >= SCAN_MAX_LINES) break
     }
   } finally {
@@ -80,6 +86,7 @@ async function discoverProjectSessions(
         lastModified = (await stat(filePath)).mtimeMs
       } catch (e) {
         return {
+          status: 'unavailable',
           sessionId,
           filePath,
           projectDirName,
@@ -92,17 +99,24 @@ async function discoverProjectSessions(
 
       try {
         const { aiTitle, cwd, hasValidJson } = await scanMetadata(filePath)
-        return {
+        const base = {
           sessionId,
           filePath,
           projectDirName,
           projectLabel: deriveProjectLabel(projectDirName, cwd),
           aiTitle,
           lastModified,
-          error: hasValidJson ? undefined : 'no valid entries found',
+        }
+        if (!hasValidJson) {
+          return { ...base, status: 'unavailable', error: 'no valid entries found' }
+        }
+        return {
+          ...base,
+          status: 'available',
         }
       } catch (e) {
         return {
+          status: 'unavailable',
           sessionId,
           filePath,
           projectDirName,
