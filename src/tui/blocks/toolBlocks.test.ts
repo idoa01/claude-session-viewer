@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import chalk from 'chalk'
 import stripAnsi from 'strip-ansi'
-import { renderToolBlockBody, renderInputSummary } from './toolBlocks'
+import { renderToolBlockBody, renderInputSummary, renderMarkdown } from './toolBlocks'
 import type { ToolInteractionBlock } from '../../core/types/session'
 
 // Force color output regardless of the test runner's TTY detection, since
@@ -119,5 +119,53 @@ describe('renderToolBlockBody', () => {
     const b = block({ name: 'Bash', input: { command: 'echo hi\x1b]0;pwned\x07' } })
     const raw = renderToolBlockBody(b, false, { width: 80, activeTab: 0 })
     expect(raw).not.toContain('\x1b]0;pwned\x07')
+  })
+})
+
+describe('renderMarkdown', () => {
+  it('renders headings without a § section prefix', () => {
+    const text = stripAnsi(renderMarkdown('# Hello', 80))
+    expect(text).toContain('Hello')
+    expect(text).not.toContain('§')
+  })
+
+  it('renders bold text with ANSI bold styling', () => {
+    const raw = renderMarkdown('**important**', 80)
+    // The plain text is present after stripping ANSI
+    expect(stripAnsi(raw)).toContain('important')
+    // Some ANSI styling should be present (bold = \x1b[1m or similar)
+    expect(raw.length).toBeGreaterThan(stripAnsi(raw).length)
+  })
+
+  it('renders inline code with ANSI styling', () => {
+    const raw = renderMarkdown('use `npm install`', 80)
+    expect(stripAnsi(raw)).toContain('npm install')
+    // Styled output should have ANSI codes around the code span
+    expect(raw.length).toBeGreaterThan(stripAnsi(raw).length)
+  })
+
+  it('renders bullet lists with bullet characters', () => {
+    const text = stripAnsi(renderMarkdown('- foo\n- bar', 80))
+    expect(text).toContain('foo')
+    expect(text).toContain('bar')
+    // Some non-alphanumeric bullet marker should appear
+    expect(text).toMatch(/[•\-*]\s*foo/)
+  })
+
+  it('renders fenced code blocks with the code content', () => {
+    const md = '```js\nconsole.log("hi")\n```'
+    const text = stripAnsi(renderMarkdown(md, 80))
+    expect(text).toContain('console.log')
+  })
+
+  it('unescapes HTML entities in the output', () => {
+    // marked encodes certain chars; with unescape:true they should come back
+    const text = stripAnsi(renderMarkdown('A &amp; B', 80))
+    expect(text).toContain('A & B')
+  })
+
+  it('strips trailing blank lines', () => {
+    const result = renderMarkdown('hello', 80)
+    expect(result).not.toMatch(/\n\s*$/)
   })
 })

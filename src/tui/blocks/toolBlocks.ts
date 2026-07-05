@@ -51,15 +51,35 @@ export function renderInputSummary(name: string, input: Record<string, unknown>)
   }
 }
 
-// One marked-terminal instance per width, mirroring renderBlockLines.ts's
-// text-block rendering (marked-terminal wraps prose to `width`).
+// One marked-terminal instance per width. The options tune the visual output
+// to be clean and readable in a narrow terminal pane:
+//   showSectionPrefix: false — suppresses the § prefix on every heading
+//   unescape: true           — converts &amp; &quot; etc. back to real chars
+//   tab: 2                   — compact 2-space indentation for lists/code
+//   reflowText: true         — hard-wraps prose to `width`
+// Chalk styling is explicit so results are stable regardless of terminal theme
+// colour-level detection inside marked-terminal.
 const markedByWidth = new Map<number, Marked>()
 
 function getMarked(width: number): Marked {
   let instance = markedByWidth.get(width)
   if (!instance) {
     instance = new Marked()
-    instance.use(markedTerminal({ width, reflowText: true }) as Parameters<Marked['use']>[0])
+    instance.use(markedTerminal({
+      width,
+      reflowText: true,
+      showSectionPrefix: false,
+      unescape: true,
+      tab: 2,
+      heading: chalk.bold.cyan,
+      firstHeading: chalk.bold.cyan,
+      strong: chalk.bold,
+      em: chalk.italic,
+      codespan: chalk.yellow,
+      blockquote: chalk.dim.italic,
+      link: chalk.blue.underline,
+      href: chalk.blue.underline,
+    }) as Parameters<Marked['use']>[0])
     markedByWidth.set(width, instance)
   }
   return instance
