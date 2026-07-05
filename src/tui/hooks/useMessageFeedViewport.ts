@@ -24,11 +24,13 @@ export interface MessageFeedViewport {
   totalLineCount: number
   cacheSize: number
   isExpanded: (item: FeedItem) => boolean
+  scrollBy: (deltaLines: number) => void
   moveCursor: (delta: number) => void
   pageBy: (deltaLines: number) => void
   jumpToTop: () => void
   jumpToBottom: () => void
   toggleExpandCursor: () => void
+  toggleExpandAt: (index: number) => void
   cycleTabCursor: () => void
 }
 
@@ -72,6 +74,17 @@ export function useMessageFeedViewport(
   // argument rather than the values closed over above, so a burst of
   // synchronous keystrokes (batched into one React update) each advance
   // from the last queued state instead of all computing from the same stale snapshot.
+
+  // Moves the viewport one terminal line at a time, keeping the action cursor
+  // on whichever feed item is at (or closest to) the new scrollTop.
+  function scrollBy(deltaLines: number) {
+    setPosition(prev => {
+      const nextScrollTop = clampScrollTop(prev.scrollTop + deltaLines, lineCounts, viewportHeight)
+      const nextCursor = clampCursorIndex(itemIndexAtLine(lineCounts, nextScrollTop), items.length)
+      return { cursorIndex: nextCursor, scrollTop: nextScrollTop }
+    })
+  }
+
   function moveCursor(delta: number) {
     setPosition(prev => {
       const nextCursor = clampCursorIndex(prev.cursorIndex + delta, items.length)
@@ -111,6 +124,20 @@ export function useMessageFeedViewport(
     })
   }
 
+  function toggleExpandAt(index: number) {
+    const targetIndex = clampCursorIndex(index, items.length)
+    const current = rendered[targetIndex]
+    if (!current) return
+    const key = feedItemKey(current)
+    setPosition(prev => ({ ...prev, cursorIndex: targetIndex }))
+    setExpandedKeys(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
   function cycleTabCursor() {
     const current = rendered[clampedCursor]
     if (!current) return
@@ -135,11 +162,13 @@ export function useMessageFeedViewport(
     totalLineCount: totalLines(lineCounts),
     cacheSize: cache.size,
     isExpanded,
+    scrollBy,
     moveCursor,
     pageBy,
     jumpToTop,
     jumpToBottom,
     toggleExpandCursor,
+    toggleExpandAt,
     cycleTabCursor,
   }
 }
