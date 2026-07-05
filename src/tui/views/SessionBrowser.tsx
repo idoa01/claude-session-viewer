@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Box, Text, useApp, useInput, useStdout } from 'ink'
 import TextInput from 'ink-text-input'
 import type { AvailableSessionEntry, SessionEntry } from '../session-discovery/discoverSessions'
+import { useMouseInput } from '../hooks/useMouseInput'
 
 interface Props {
   entries: SessionEntry[]
@@ -25,6 +26,7 @@ function matchesQuery(entry: SessionEntry, query: string): boolean {
 }
 
 const LIST_ROWS_RESERVED = 6 // header + filter box + status line + margins
+const LIST_START_ROW = 3
 
 export function SessionBrowser({ entries, onSelect, onLiveHandoff }: Props) {
   const { exit } = useApp()
@@ -41,6 +43,11 @@ export function SessionBrowser({ entries, onSelect, onLiveHandoff }: Props) {
   const windowEnd = Math.min(filtered.length, windowStart + visibleRows)
   const visible = filtered.slice(windowStart, windowEnd)
 
+  function moveSelection(delta: number) {
+    if (filtered.length === 0) return
+    setSelectedIndex(i => Math.max(0, Math.min(filtered.length - 1, i + delta)))
+  }
+
   useInput((input, key) => {
     if (filterFocused) {
       if (key.escape) setFilterFocused(false)
@@ -56,13 +63,11 @@ export function SessionBrowser({ entries, onSelect, onLiveHandoff }: Props) {
       return
     }
     if (input === 'j' || key.downArrow) {
-      if (filtered.length === 0) return
-      setSelectedIndex(i => Math.min(filtered.length - 1, i + 1))
+      moveSelection(1)
       return
     }
     if (input === 'k' || key.upArrow) {
-      if (filtered.length === 0) return
-      setSelectedIndex(i => Math.max(0, i - 1))
+      moveSelection(-1)
       return
     }
     if (key.return && filtered.length > 0) {
@@ -74,6 +79,22 @@ export function SessionBrowser({ entries, onSelect, onLiveHandoff }: Props) {
       const selected = filtered[clampedIndex]
       if (selected?.status === 'available') onLiveHandoff?.(selected)
     }
+  }, { isActive: true })
+
+  useMouseInput(event => {
+    if (event.type === 'wheel-down') {
+      moveSelection(1)
+      return
+    }
+    if (event.type === 'wheel-up') {
+      moveSelection(-1)
+      return
+    }
+    if (event.type !== 'left-press') return
+
+    const visibleIndex = event.y - LIST_START_ROW
+    if (visibleIndex < 0 || visibleIndex >= visible.length) return
+    setSelectedIndex(windowStart + visibleIndex)
   }, { isActive: true })
 
   function handleFilterSubmit() {
@@ -119,7 +140,7 @@ export function SessionBrowser({ entries, onSelect, onLiveHandoff }: Props) {
       </Box>
       <Box marginTop={1}>
         <Text dimColor>
-          {filterFocused ? 'Esc unfocus filter · Enter jump to first match' : 'j/k move · / filter · Enter open · o handoff · q quit'}
+          {filterFocused ? 'Esc unfocus filter · Enter jump to first match' : 'j/k or wheel move · click select · / filter · Enter open · o handoff · q quit'}
         </Text>
       </Box>
     </Box>
