@@ -56,6 +56,44 @@ describe('MessageFeed', () => {
     expect(frame).not.toContain('message 0')
   })
 
+  it('scrolls down with the mouse wheel', async () => {
+    const messages = makeMessages(20)
+    const { stdin, lastFrame } = render(
+      <MessageFeed messages={messages} width={40} height={6} onExit={() => {}} isActive />
+    )
+    await pressKeys(stdin, ['\x1b[<65;1;1M'])
+    const frame = stripAnsi(lastFrame() ?? '')
+    expect(frame).not.toContain('message 0')
+  })
+
+  // With height=2 each message occupies the full viewport (1 header + 1 body line).
+  // One j press scrolls one line: message 0 body is still visible.
+  // Two j presses: message 0 is completely gone but message 1 body is not yet visible
+  // (we are mid-block). This proves line-by-line movement, not whole-section jumping.
+  it('j scrolls exactly one line, not a whole section', async () => {
+    const messages = makeMessages(5)
+    // height=2: viewport shows exactly one message (header + body) at a time
+    const { stdin, lastFrame } = render(
+      <MessageFeed messages={messages} width={40} height={2} onExit={() => {}} isActive />
+    )
+    // Before any scroll, message 0 header and body are visible
+    expect(stripAnsi(lastFrame() ?? '')).toContain('message 0')
+
+    // One j: scrollTop=1 → message 0 body still in view, header scrolled out
+    await pressKeys(stdin, ['j'])
+    expect(stripAnsi(lastFrame() ?? '')).toContain('message 0')
+
+    // Two j presses: scrollTop=2 → message 0 entirely gone
+    await pressKeys(stdin, ['j'])
+    expect(stripAnsi(lastFrame() ?? '')).not.toContain('message 0')
+  })
+
+  // Alt-j section-jump behaviour is verified at the viewport layer in
+  // useMessageFeedViewport (via moveCursor), and the keybinding dispatch
+  // is covered by code inspection. The Ink testing library splits the
+  // raw ESC sequence before useInput can detect key.meta, so we skip the
+  // full-stack integration form of this test here.
+
   it('clamps scrolling at the bottom of the transcript (G jumps to end, further j is a no-op)', async () => {
     const messages = makeMessages(10)
     const { stdin, lastFrame } = render(
@@ -86,6 +124,17 @@ describe('MessageFeed', () => {
     )
     await pressKeys(stdin, ['G', 'g'])
     expect(lastFrame() ?? '').toContain('message 0')
+  })
+
+  it('does not apply inverse (full-block highlight) when navigating with j/k', async () => {
+    const messages = makeMessages(5)
+    const { stdin, lastFrame } = render(
+      <MessageFeed messages={messages} width={40} height={10} onExit={() => {}} isActive />
+    )
+    // Press j a few times; frames should never contain the SGR inverse code \x1b[7m
+    await pressKeys(stdin, ['j', 'j', 'k'])
+    const raw = lastFrame() ?? ''
+    expect(raw).not.toContain('\x1b[7m')
   })
 
   it('calls onExit on q', async () => {
@@ -158,6 +207,28 @@ describe('MessageFeed', () => {
     expect(collapsed).not.toContain(longContent)
 
     await pressKeys(stdin, ['\r'])
+    const expanded = stripAnsi(lastFrame() ?? '').replace(/\s+/g, '')
+    expect(expanded).toContain(longContent)
+  })
+
+  it('expands a truncated tool result by clicking the visible item', async () => {
+    const longContent = 'z'.repeat(1000)
+    const messages = [
+      makeToolMessage('a1', {
+        type: 'tool_interaction',
+        id: 't1',
+        name: 'Bash',
+        input: { command: 'echo' },
+        result: { content: longContent, truncated: true },
+      }),
+    ]
+    const { stdin, lastFrame } = render(
+      <MessageFeed messages={messages} width={80} height={30} onExit={() => {}} isActive />
+    )
+    const collapsed = stripAnsi(lastFrame() ?? '').replace(/\s+/g, '')
+    expect(collapsed).not.toContain(longContent)
+
+    await pressKeys(stdin, ['\x1b[<0;1;1M'])
     const expanded = stripAnsi(lastFrame() ?? '').replace(/\s+/g, '')
     expect(expanded).toContain(longContent)
   })
