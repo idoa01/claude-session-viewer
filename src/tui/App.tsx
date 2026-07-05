@@ -7,6 +7,7 @@ import { SessionBrowser } from './views/SessionBrowser'
 import { MessageFeed } from './views/MessageFeed'
 import { useSession } from './hooks/useSession'
 import { useTerminalSize } from './hooks/useTerminalSize'
+import { useMouseMode } from './hooks/useMouseMode'
 import { useLiveHandoff, type LiveHandoffStatus } from './live-handoff/useLiveHandoff'
 
 const PROJECTS_ROOT = join(homedir(), '.claude', 'projects')
@@ -79,10 +80,11 @@ function SelectedSession({ entry, terminalWidth, terminalHeight, onExit, onLiveH
           height={feedHeight}
           onExit={onExit}
           isActive
+          screenOffset={{ x: sidebarCollapsed ? 0 : SIDEBAR_WIDTH + 1, y: 0 }}
         />
       </Box>
       <Text dimColor>
-        j/k scroll · Ctrl-F/B page · g/G top/bottom · Enter/Space expand · s sidebar · o handoff · Esc/q back
+        j/k or wheel scroll line · Alt-j/k jump section · click toggle · Ctrl-F/B page · g/G top/bottom · Enter/Space expand · s sidebar · o handoff · Esc/q back
         {handoffStatus.state === 'active' && ` · live at ${handoffStatus.url}`}
         {handoffStatus.state === 'error' && ` · handoff failed: ${handoffStatus.message}`}
       </Text>
@@ -99,6 +101,7 @@ export default function App({ directModePath }: AppProps) {
   const { columns, rows } = useTerminalSize()
   const { exit } = useApp()
   const { status: handoffStatus, trigger: triggerLiveHandoff } = useLiveHandoff()
+  useMouseMode()
 
   useEffect(() => {
     if (directModePath) return
